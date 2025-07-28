@@ -17,14 +17,9 @@ import { AuthUser } from 'src/common/decorators/user.decorator';
 import { User } from 'src/users/entities/user.entity';
 import { EntityNotFoundFilter } from 'src/common/filters/entity-not-found-exception.filter';
 import { UpdateOrderDto } from './dto/update-order.dto';
-import { ExcelServiceService } from 'src/excel-service/excel-service.service';
-import * as path from 'path';
 @Controller('orders')
 export class OrdersController {
-  constructor(
-    private readonly ordersService: OrdersService,
-    private readonly excelService: ExcelServiceService,
-  ) {}
+  constructor(private readonly ordersService: OrdersService) {}
   @UseGuards(JwtGuard)
   @Get()
   findAll() {
@@ -54,36 +49,5 @@ export class OrdersController {
     @Body() updateOrderDto: UpdateOrderDto,
   ) {
     return this.ordersService.update(id, updateOrderDto);
-  }
-  @UseGuards(JwtGuard)
-  @Post(':id/generate-excel')
-  async generateOrderExcel(
-    @Param('id') id: string,
-  ): Promise<{ filePath: string }> {
-    const order = await this.ordersService.findById(+id); // Получаем заказ по ID
-    if (!order) {
-      throw new Error('Order not found');
-    }
-
-    // Путь к шаблону и выходной папке
-    const templatePath = path.join(__dirname, '../templates/Order.xlsx');
-    const outputDir = path.join(__dirname, '../../uploads');
-
-    // Генерация нового файла Excel
-    const { excelName, pdfName } =
-      await this.excelService.generateExcelFromTemplate(
-        templatePath,
-        outputDir,
-        order,
-      );
-
-    // Сохранение пути к файлу в сущность
-    // order.filePath = excelPath;
-    await this.ordersService.updateLinks(+id, {
-      filePath: `https://api.pvb-university.com/uploads/${excelName}`,
-      filePathPdf: `https://api.pvb-university.com/uploads/${pdfName}`,
-    });
-
-    return { filePath: excelName };
   }
 }

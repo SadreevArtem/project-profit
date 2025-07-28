@@ -29,13 +29,6 @@ export class OrdersService {
       relations: {
         owner: true,
         customer: true,
-        items: {
-          productType: true,
-          construction: true,
-          manufacturingStandart: true,
-          tightnessClass: true,
-          temperatureRange: true,
-        },
       },
     });
   }
@@ -50,10 +43,6 @@ export class OrdersService {
       owner,
       customer,
     });
-  }
-  async updateLinks(id: number, updateOrderDto: UpdateOrderDto) {
-    // Обновляем заказ, передавая только нужные поля из rest
-    return this.orderRepository.update(id, updateOrderDto);
   }
   async create(createOrderDto: CreateOrderDto, userId: number) {
     const { customerId } = createOrderDto;
