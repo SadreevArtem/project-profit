@@ -1,10 +1,4 @@
-import {
-  IsBoolean,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  Length,
-} from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, Length } from 'class-validator';
 
 export class CreateOrderDto {
   @IsNotEmpty()
@@ -14,10 +8,6 @@ export class CreateOrderDto {
   @IsNotEmpty()
   @Length(2, 200)
   complectName: string;
-
-  @IsNotEmpty()
-  @IsNumber()
-  count: number;
 
   @IsOptional()
   @IsBoolean()

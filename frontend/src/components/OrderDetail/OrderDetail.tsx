@@ -9,31 +9,17 @@ import {
   TextField,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useRouter } from "next/router";
-import {
-  Customer,
-  Item,
-  Order,
-  User,
-  ConstructionType,
-  ManufacturingStandartType,
-  ProductType,
-  TemperatureRangeType,
-  TightnessClassType,
-} from "../../../shared/types";
+import { Customer, Item, Order, User } from "../../../shared/types";
 import { useAuthStore } from "../../../shared/stores/auth";
 import { Button } from "../Button";
 import { appToast } from "../AppToast/components/lib/appToast";
 import { api } from "../../../shared/api/api";
 import { useTranslations } from "next-intl";
 import { useJwtToken } from "../../../shared/hooks/useJwtToken";
-import { UpdateForm } from "./components/UpdateForm/UpdateForm";
-import VirtualizedCreateItems from "./components/VirtualizedCreateItems/VirtualizedCreateItems";
 import clsx from "clsx";
-import Image from "next/image";
-import Link from "next/link";
 
 type Props = {
   id: number;
@@ -44,7 +30,6 @@ type Inputs = Order & {
   ownerId: number;
   equipmentTypeId: number;
 };
-type InputItem = Item & { orderId: number };
 
 export const OrderDetail: React.FC<Props> = ({ id }) => {
   const t = useTranslations("OrderDetail");
@@ -57,14 +42,6 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
   const { sub } = useJwtToken();
   const isAdmin = Number(sub) === 1;
 
-  const getProductTypes = () => api.getAllProductTypesRequest(token);
-  const getConstructions = () => api.getAllConstructionsRequest(token);
-  const getManufacturingStandart = () =>
-    api.getAllManufacturingStandartsRequest(token);
-  const getTightnessClass = () => api.getAllTightnessClassRequest(token);
-  const getTemperatureRanges = () => api.getAllTemperatureRangeRequest(token);
-  // const getMaterials = () => api.getAllMaterialsRequest(token);
-
   const getCustomers = () => api.getAllCustomersRequest(token);
   const { data: customers = [], isLoading: isLoadingCustomers } = useQuery<
     Customer[]
@@ -76,33 +53,6 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
     queryFn: getUsers,
     enabled: isAdmin,
   });
-
-  const { data: productTypes = [] } = useQuery<ProductType[]>({
-    queryKey: ["product-types"],
-    queryFn: getProductTypes,
-  });
-  const { data: constructions = [] } = useQuery<ConstructionType[]>({
-    queryKey: ["constructions"],
-    queryFn: getConstructions,
-  });
-  const { data: manufacturingStandart = [] } = useQuery<
-    ManufacturingStandartType[]
-  >({
-    queryKey: ["manufacturingStandart"],
-    queryFn: getManufacturingStandart,
-  });
-  const { data: tightnessClasses = [] } = useQuery<TightnessClassType[]>({
-    queryKey: ["tightnessClass"],
-    queryFn: getTightnessClass,
-  });
-  const { data: temperatureRanges = [] } = useQuery<TemperatureRangeType[]>({
-    queryKey: ["temperatureRanges"],
-    queryFn: getTemperatureRanges,
-  });
-  // const { data: materials = [] } = useQuery<MaterialType[]>({
-  //   queryKey: ["materials"],
-  //   queryFn: getMaterials,
-  // });
 
   const getOrderById = () => api.getOrderByIdRequest(id, token);
   const getQueryKey = (id: number) => ["order"].concat(id.toString());
@@ -118,7 +68,6 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
     register,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<Inputs>({
     defaultValues: {
@@ -132,24 +81,10 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
     api.createOrderRequest(input, token);
   const deleteFunc = () => api.deleteOrderRequest(id, token);
 
-  const updateItemFunc = (input: InputItem) =>
-    api.updateItemRequest(input, token);
-  const createItemFunc = (input: InputItem) =>
-    api.createItemRequest(input, token);
-
   const { mutateAsync: mutation, isPending } = useMutation({
     mutationFn: isEdit ? updateOrderFunc : createOrderFunc,
     onSuccess: () => {
       appToast.success(isEdit ? t("updated") : t("added"));
-      queryClient.invalidateQueries({ queryKey: getQueryKey(id) });
-    },
-    onError: () => {
-      appToast.error(t("error"));
-    },
-  });
-  const { mutateAsync: mutationItem } = useMutation({
-    mutationFn: isEdit ? updateItemFunc : createItemFunc,
-    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(id) });
     },
     onError: () => {
@@ -163,17 +98,6 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
       appToast.success("deleted");
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       router.back();
-    },
-    onError: () => {
-      appToast.error(t("error"));
-    },
-  });
-
-  const generateMutation = useMutation({
-    mutationFn: () => api.generateExcelFile(id, token),
-    onSuccess: () => {
-      appToast.success("generate");
-      queryClient.invalidateQueries({ queryKey: getQueryKey(id) });
     },
     onError: () => {
       appToast.error(t("error"));
@@ -195,35 +119,11 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
     deleteMutation.mutate();
   };
 
-  const onGenerateClick = (event: React.MouseEvent) => {
-    event.preventDefault();
-    generateMutation.mutate();
-  };
-
   const onSubmit: SubmitHandler<Inputs> = (data) => {
-    if (Object.keys(formData).length < 1) {
-      appToast.error("Заполните поля продукции");
-      return;
-    }
     mutation({
       ...data,
       ...(Boolean(order?.owner.id) && { ownerId: owner }),
-    }).then(async (data) => {
-      // await Promise.all(
-      //   Array.from(Object.values(formData), (item) =>
-      //     mutationItem({
-      //       ...item,
-      //       ...(isEdit ? { orderId: id } : { orderId: data.id }),
-      //     })
-      //   )
-      // );
-      await Object.values(formData).reduce(async (prevPromise, item) => {
-        await prevPromise; // Дожидаемся завершения предыдущего
-        return mutationItem({
-          ...item,
-          ...(isEdit ? { orderId: id } : { orderId: data.id }),
-        });
-      }, Promise.resolve());
+    }).then(async () => {
       router.back();
     });
   };
@@ -253,23 +153,6 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
       );
     }
   }, [order, setValue]);
-
-  const options = useMemo(() => {
-    return {
-      productTypes,
-      constructions,
-      manufacturingStandart,
-      tightnessClasses,
-      temperatureRanges,
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    productTypes,
-    constructions,
-    manufacturingStandart,
-    tightnessClasses,
-    temperatureRanges,
-  ]);
 
   return (
     <>
@@ -306,21 +189,6 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                   {...register("complectName", { required: true })}
                 />
                 {errors.complectName && (
-                  <span className="text-red">{t("required")}</span>
-                )}
-                <TextField
-                  variant="outlined"
-                  required
-                  defaultValue={order?.count}
-                  disabled={isEdit}
-                  label={t("count")}
-                  type="number"
-                  onChange={(event) => {
-                    setValue("count", +event.target.value);
-                  }}
-                  // {...register("count", { required: true })}
-                />
-                {errors.count && (
                   <span className="text-red">{t("required")}</span>
                 )}
                 <FormControl fullWidth required>
@@ -400,9 +268,6 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                       onButtonClick={onDeleteClick}
                       type="button"
                     />
-                  )}
-                  {isEdit && (
-                    <Button title="export" onButtonClick={onGenerateClick} />
                   )}
                 </div>
                 <div className="flex flex-col">
@@ -541,80 +406,8 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                   />
                 </div>
               </form>
-              <div className="flex w-full mt-8">
-                {order?.filePath && (
-                  <div className="flex w-full justify-center">
-                    <div className="relative lg:h-[64px] h-[88px] lg:max-w-[64px] bg-gray-purple z-0 rounded-4 max-md:mx-auto w-full">
-                      <Link target="blanc" href={order?.filePath || ""}>
-                        <Image
-                          src={`/files-images/${"xls"}.svg`}
-                          width={100}
-                          height={100}
-                          alt="изображение"
-                          className="absolute left-0 right-0 top-0 bottom-0 m-auto max-md:w-[56px]"
-                        />
-                      </Link>
-                    </div>
-                  </div>
-                )}
-                {order?.filePathPdf && (
-                  <div className="flex w-full justify-center">
-                    <div className="relative lg:h-[64px] h-[88px] lg:max-w-[64px] bg-gray-purple z-0 rounded-4 max-md:mx-auto w-full">
-                      <Link target="blanc" href={order?.filePathPdf || ""}>
-                        <Image
-                          src={`/files-images/${"pdf"}.svg`}
-                          width={100}
-                          height={100}
-                          alt="изображение"
-                          className="absolute left-0 right-0 top-0 bottom-0 m-auto max-md:w-[56px]"
-                        />
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
           }
-          <div style={{ width: "fit", height: "600px" }} className="">
-            <VirtualizedCreateItems
-              count={watch("count")}
-              setFormData={setFormData}
-              isEdit={isEdit}
-              formData={formData}
-              options={options}
-            />
-            {/* {!isEdit && (
-              <Autosizer>
-                {({ width, height }) => (
-                  <List
-                    height={height}
-                    width={width}
-                    itemCount={createItems.length}
-                    itemSize={120}
-                  >
-                    {({ index, style }) => (
-                      <div key={index} style={style}>
-                        {createItems[index]}
-                      </div>
-                    )}
-                  </List>
-                )}
-              </Autosizer>
-            )} */}
-            {isEdit &&
-              Object.values(formData)
-                .sort((a, b) => a.id - b.id)
-                .map((item, index) => (
-                  <UpdateForm
-                    key={index}
-                    item={item}
-                    formData={formData[item.id]}
-                    index={index}
-                    setFormData={setFormData}
-                    options={options}
-                  />
-                ))}
-          </div>
 
           <div className="h-[32px]"></div>
         </section>

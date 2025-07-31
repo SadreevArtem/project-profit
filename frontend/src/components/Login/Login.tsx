@@ -59,7 +59,7 @@ export const Login: React.FC = () => {
               height={100}
               className="self-center"
             />
-            <h2 className="text-2xl font-bold text-primary">SPEC FLOW</h2>
+            <h2 className="text-2xl font-bold text-primary">PROJECT PROFIT</h2>
           </div>
           {isSignUp ? (
             <div className="flex gap-4 text-primary">

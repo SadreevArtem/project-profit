@@ -20,9 +20,6 @@ export class Order {
   contractNumber: string;
 
   @Column()
-  count: number;
-
-  @Column()
   @Length(2, 200)
   complectName: string;
 
