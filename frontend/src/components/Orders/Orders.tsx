@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuthStore } from "../../../shared/stores/auth";
 import { useQuery } from "@tanstack/react-query";
-import { Order } from "../../../shared/types";
+import { Order, OrderStatus } from "../../../shared/types";
 import { api } from "../../../shared/api/api";
 import {
   Paper,
@@ -16,6 +16,7 @@ import Link from "next/link";
 import { Button } from "../Button";
 import { useTranslations } from "next-intl";
 import { formatDate } from "../../../shared/lib/formatDate";
+import clsx from "clsx";
 
 export const Orders = () => {
   const token = useAuthStore((state) => state.token);
@@ -43,7 +44,7 @@ export const Orders = () => {
                   <TableCell>{t("ID")}</TableCell>
                   <TableCell>{t("customerName")}</TableCell>
                   <TableCell>{t("contractNumber")}</TableCell>
-                  <TableCell>{t("count")}</TableCell>
+                  <TableCell>{t("status")}</TableCell>
                   <TableCell>{t("complectName")}</TableCell>
                   <TableCell>{t("owner")}</TableCell>
                   <TableCell>{t("created")}</TableCell>
@@ -62,7 +63,16 @@ export const Orders = () => {
                         {row.contractNumber}
                       </Link>
                     </TableCell>
-                    <TableCell>{row.count}</TableCell>
+                    <TableCell
+                      className={clsx({
+                        "!bg-pink-500 !text-white":
+                          row.orderStatus === OrderStatus.UNDER_APPROVAL,
+                        "!bg-green-500": row.orderStatus === OrderStatus.AGREED,
+                        "!bg-slate-400": row.orderStatus === OrderStatus.DRAFT,
+                      })}
+                    >
+                      {t(row.orderStatus)}
+                    </TableCell>
                     <TableCell>{row.complectName}</TableCell>
                     <TableCell>{row.owner?.about}</TableCell>
                     <TableCell>{formatDate(row.createdAt)}</TableCell>

@@ -1,4 +1,11 @@
-import { IsBoolean, IsNotEmpty, IsOptional, Length } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  Length,
+} from 'class-validator';
+import { OrderStatus } from 'src/types';
 
 export class CreateOrderDto {
   @IsNotEmpty()
@@ -23,39 +30,7 @@ export class CreateOrderDto {
   @IsOptional()
   ownerId: number; // связь с пользователем, который является владельцем заказа
 
+  @IsEnum(OrderStatus)
   @IsOptional()
-  @IsBoolean()
-  installationDrawings: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  assemblyDrawing: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  installationInstructions: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  qualityPlan: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  materialsCertificate: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  declarationOfTRTC: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  presenceOfCustomerDuringTesting: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  gasInspectionHighPressure: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  thirdSideInspection: boolean;
+  orderStatus?: OrderStatus;
 }

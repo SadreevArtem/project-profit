@@ -12,7 +12,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useRouter } from "next/router";
-import { Customer, Item, Order, User } from "../../../shared/types";
+import { Customer, Order, OrderStatus, User } from "../../../shared/types";
 import { useAuthStore } from "../../../shared/stores/auth";
 import { Button } from "../Button";
 import { appToast } from "../AppToast/components/lib/appToast";
@@ -62,7 +62,10 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
     queryFn: getOrderById,
     enabled: id !== 0,
   });
-  const [formData, setFormData] = React.useState<Record<number, Item>>({});
+
+  const [orderStatus, setOrderStatus] = React.useState<OrderStatus | "">(
+    order?.orderStatus || OrderStatus.DRAFT
+  );
 
   const {
     register,
@@ -113,6 +116,10 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
     setOwner(+event.target.value as number);
     setValue("ownerId", +event.target.value as number);
   };
+  const handleChangeOrderStatus = (event: SelectChangeEvent) => {
+    setOrderStatus(event.target.value as OrderStatus);
+    setValue("orderStatus", event.target.value as OrderStatus);
+  };
 
   const onDeleteClick = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -124,6 +131,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
       ...data,
       ...(Boolean(order?.owner.id) && { ownerId: owner }),
     }).then(async () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
       router.back();
     });
   };
@@ -143,14 +151,6 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
     if (order.owner) {
       setOwner(order.owner.id);
       setValue("ownerId", order.owner.id);
-    }
-    if (order.items) {
-      setFormData(
-        order.items.reduce((acc, item) => {
-          acc[item.id] = item;
-          return acc;
-        }, {} as Record<number, (typeof order.items)[number]>)
-      );
     }
   }, [order, setValue]);
 
@@ -254,6 +254,27 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                     ))}
                   </Select>
                 </FormControl>
+                {isAdmin && (
+                  <FormControl className={clsx({ "!hidden": !isAdmin })}>
+                    <InputLabel id="demo-simple-select-label">
+                      {t("order_status")}
+                    </InputLabel>
+                    <Select
+                      labelId="demo-simple-select-label"
+                      id="demo-simple-select"
+                      value={orderStatus}
+                      defaultValue={order?.orderStatus}
+                      label={t("order_status")}
+                      onChange={handleChangeOrderStatus}
+                    >
+                      {Object.values(OrderStatus).map((item, i) => (
+                        <MenuItem key={i} value={item}>
+                          {t(item)}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
 
                 <div className="flex gap-4">
                   <Button
@@ -281,128 +302,6 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                       />
                     }
                     label={t("documentation_sheet")}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        defaultChecked={order?.installationDrawings || false}
-                        onChange={(e) =>
-                          setValue("installationDrawings", e.target.checked)
-                        }
-                      />
-                    }
-                    label={t("installation_drawings")}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        defaultChecked={order?.assemblyDrawing || false}
-                        onChange={(e) =>
-                          setValue("assemblyDrawing", e.target.checked)
-                        }
-                      />
-                    }
-                    label={t("assembly_drawing")}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        defaultChecked={order?.agreementProtocol || false}
-                        onChange={(e) =>
-                          setValue("agreementProtocol", e.target.checked)
-                        }
-                      />
-                    }
-                    label={t("agreement_protocol")}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        defaultChecked={
-                          order?.installationInstructions || false
-                        }
-                        onChange={(e) =>
-                          setValue("installationInstructions", e.target.checked)
-                        }
-                      />
-                    }
-                    label={t("installation_instructions")}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        defaultChecked={order?.qualityPlan || false}
-                        onChange={(e) =>
-                          setValue("qualityPlan", e.target.checked)
-                        }
-                      />
-                    }
-                    label={t("quality_plan")}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        defaultChecked={order?.materialsCertificate || false}
-                        onChange={(e) =>
-                          setValue("materialsCertificate", e.target.checked)
-                        }
-                      />
-                    }
-                    label={t("materials_certificate")}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        defaultChecked={order?.declarationOfTRTC || false}
-                        onChange={(e) =>
-                          setValue("declarationOfTRTC", e.target.checked)
-                        }
-                      />
-                    }
-                    label={t("declaration_of_trtc")}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        defaultChecked={
-                          order?.presenceOfCustomerDuringTesting || false
-                        }
-                        onChange={(e) =>
-                          setValue(
-                            "presenceOfCustomerDuringTesting",
-                            e.target.checked
-                          )
-                        }
-                      />
-                    }
-                    label={t("presence_of_customer_during_testing")}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        defaultChecked={
-                          order?.gasInspectionHighPressure || false
-                        }
-                        onChange={(e) =>
-                          setValue(
-                            "gasInspectionHighPressure",
-                            e.target.checked
-                          )
-                        }
-                      />
-                    }
-                    label={t("gas_inspection_high_pressure")}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        defaultChecked={order?.thirdSideInspection || false}
-                        onChange={(e) =>
-                          setValue("thirdSideInspection", e.target.checked)
-                        }
-                      />
-                    }
-                    label={t("third_side_inspection")}
                   />
                 </div>
               </form>
