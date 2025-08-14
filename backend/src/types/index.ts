@@ -8,3 +8,9 @@ export enum OrderStatus {
   UNDER_APPROVAL = 'UNDER_APPROVAL',
   AGREED = 'AGREED',
 }
+
+export enum TypeOrder {
+  RUBTORUB = 'RUBTORUB',
+  RUBTORUBVAT = 'RUBTORUBVAT',
+  USDTORUB = 'USDTORUB',
+}

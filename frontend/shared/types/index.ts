@@ -33,6 +33,12 @@ export enum OrderStatus {
   AGREED = "AGREED",
 }
 
+export enum TypeOrder {
+  RUBTORUB = "RUBTORUB",
+  RUBTORUBVAT = "RUBTORUBVAT",
+  USDTORUB = "USDTORUB",
+}
+
 export type Customer = {
   id: number;
   name: string;
@@ -44,9 +50,14 @@ export type Order = {
   id: number;
   contractNumber: string;
   complectName: string;
+  purchase: number;
+  productionTime: number;
+  prepayment: number;
+  paymentBeforeShipment: number;
   customer: Customer;
   owner: User;
   orderStatus: OrderStatus;
+  typeOrder: TypeOrder;
   createdAt: Date;
   updatedAt: Date;
   documentationSheet: boolean;

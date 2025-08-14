@@ -2,10 +2,11 @@ import {
   IsBoolean,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   Length,
 } from 'class-validator';
-import { OrderStatus } from 'src/types';
+import { OrderStatus, TypeOrder } from 'src/types';
 
 export class CreateOrderDto {
   @IsNotEmpty()
@@ -15,6 +16,22 @@ export class CreateOrderDto {
   @IsNotEmpty()
   @Length(2, 200)
   complectName: string;
+
+  @IsOptional()
+  @IsNumber()
+  purchase: number;
+
+  @IsOptional()
+  @IsNumber()
+  productionTime: number;
+
+  @IsOptional()
+  @IsNumber()
+  prepayment: number;
+
+  @IsOptional()
+  @IsNumber()
+  paymentBeforeShipment: number;
 
   @IsOptional()
   @IsBoolean()
@@ -33,4 +50,8 @@ export class CreateOrderDto {
   @IsEnum(OrderStatus)
   @IsOptional()
   orderStatus?: OrderStatus;
+
+  @IsEnum(TypeOrder)
+  @IsOptional()
+  typeOrder?: TypeOrder;
 }

@@ -12,7 +12,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useRouter } from "next/router";
-import { Customer, Order, OrderStatus, User } from "../../../shared/types";
+import {
+  Customer,
+  Order,
+  OrderStatus,
+  TypeOrder,
+  User,
+} from "../../../shared/types";
 import { useAuthStore } from "../../../shared/stores/auth";
 import { Button } from "../Button";
 import { appToast } from "../AppToast/components/lib/appToast";
@@ -20,15 +26,15 @@ import { api } from "../../../shared/api/api";
 import { useTranslations } from "next-intl";
 import { useJwtToken } from "../../../shared/hooks/useJwtToken";
 import clsx from "clsx";
+import { RubToRub } from "./components/RubToRub";
 
 type Props = {
   id: number;
 };
 
-type Inputs = Order & {
+export type Inputs = Order & {
   customerId: number;
   ownerId: number;
-  equipmentTypeId: number;
 };
 
 export const OrderDetail: React.FC<Props> = ({ id }) => {
@@ -65,6 +71,10 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
 
   const [orderStatus, setOrderStatus] = React.useState<OrderStatus | "">(
     order?.orderStatus || OrderStatus.DRAFT
+  );
+
+  const [typeOrder, setTypeOrder] = React.useState<TypeOrder>(
+    order?.typeOrder || TypeOrder.RUBTORUB
   );
 
   const {
@@ -121,6 +131,11 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
     setValue("orderStatus", event.target.value as OrderStatus);
   };
 
+  const handleChangeTypeOrder = (event: SelectChangeEvent) => {
+    setTypeOrder(event.target.value as TypeOrder);
+    setValue("typeOrder", event.target.value as TypeOrder);
+  };
+
   const onDeleteClick = (event: React.MouseEvent) => {
     event.preventDefault();
     deleteMutation.mutate();
@@ -152,7 +167,25 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
       setOwner(order.owner.id);
       setValue("ownerId", order.owner.id);
     }
+    if (order.typeOrder) {
+      setTypeOrder(order.typeOrder);
+      setValue("typeOrder", order.typeOrder);
+    }
   }, [order, setValue]);
+
+  const renderContent = () => {
+    switch (typeOrder) {
+      case "RUBTORUB":
+        return (
+          <RubToRub
+            register={register}
+            errors={errors}
+            setValue={setValue}
+            order={order}
+          />
+        );
+    }
+  };
 
   return (
     <>
@@ -275,6 +308,25 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                     </Select>
                   </FormControl>
                 )}
+                <FormControl className={clsx({ "!hidden": !isAdmin })}>
+                  <InputLabel id="demo-simple-select-label">
+                    {t("type_order")}
+                  </InputLabel>
+                  <Select
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select"
+                    value={typeOrder}
+                    defaultValue={order?.typeOrder}
+                    label={t("type_order")}
+                    onChange={handleChangeTypeOrder}
+                  >
+                    {Object.values(TypeOrder).map((item, i) => (
+                      <MenuItem key={i} value={item}>
+                        {t(item)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
                 <div className="flex gap-4">
                   <Button
@@ -307,7 +359,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
               </form>
             </div>
           }
-
+          {renderContent()}
           <div className="h-[32px]"></div>
         </section>
       )}
