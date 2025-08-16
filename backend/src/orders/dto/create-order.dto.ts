@@ -2,11 +2,10 @@ import {
   IsBoolean,
   IsEnum,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   Length,
 } from 'class-validator';
-import { OrderStatus, TypeOrder } from 'src/types';
+import { OrderStatus, Parameters, TypeOrder } from 'src/types';
 
 export class CreateOrderDto {
   @IsNotEmpty()
@@ -18,20 +17,7 @@ export class CreateOrderDto {
   complectName: string;
 
   @IsOptional()
-  @IsNumber()
-  purchase: number;
-
-  @IsOptional()
-  @IsNumber()
-  productionTime: number;
-
-  @IsOptional()
-  @IsNumber()
-  prepayment: number;
-
-  @IsOptional()
-  @IsNumber()
-  paymentBeforeShipment: number;
+  parameters: Parameters;
 
   @IsOptional()
   @IsBoolean()

@@ -1,0 +1,1 @@
+export const OPERATIONAL_ACTIVITIES = 4 / 100;

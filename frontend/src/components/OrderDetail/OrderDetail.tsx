@@ -81,6 +81,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<Inputs>({
     defaultValues: {
@@ -179,6 +180,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
         return (
           <RubToRub
             register={register}
+            watch={watch}
             errors={errors}
             setValue={setValue}
             order={order}

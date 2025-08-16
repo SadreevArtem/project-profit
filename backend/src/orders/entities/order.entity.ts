@@ -1,6 +1,6 @@
 import { Length } from 'class-validator';
 import { Customer } from 'src/customers/entities/customer.entity';
-import { OrderStatus, TypeOrder } from 'src/types';
+import { OrderStatus, Parameters, TypeOrder } from 'src/types';
 import { User } from 'src/users/entities/user.entity';
 import {
   Column,
@@ -20,17 +20,8 @@ export class Order {
   @Length(2, 200)
   contractNumber: string;
 
-  @Column({ nullable: true })
-  purchase: number;
-
-  @Column({ nullable: true })
-  productionTime: number;
-
-  @Column({ nullable: true })
-  prepayment: number;
-
-  @Column({ nullable: true })
-  paymentBeforeShipment: number;
+  @Column({ type: 'jsonb', nullable: true })
+  parameters: Parameters;
 
   @Column()
   @Length(2, 200)
