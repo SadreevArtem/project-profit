@@ -94,6 +94,8 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
   const createOrderFunc = (input: Inputs) =>
     api.createOrderRequest(input, token);
   const deleteFunc = () => api.deleteOrderRequest(id, token);
+  const changeStatusFunc = (input: Order) =>
+    api.updateOrderRequest(input, token);
 
   const { mutateAsync: mutation, isPending } = useMutation({
     mutationFn: isEdit ? updateOrderFunc : createOrderFunc,
@@ -110,6 +112,18 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
     mutationFn: deleteFunc,
     onSuccess: () => {
       appToast.success("deleted");
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      router.back();
+    },
+    onError: () => {
+      appToast.error(t("error"));
+    },
+  });
+
+  const changeStatusMutation = useMutation({
+    mutationFn: changeStatusFunc,
+    onSuccess: () => {
+      appToast.success("на согласование");
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       router.back();
     },
@@ -142,6 +156,15 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
     deleteMutation.mutate();
   };
 
+  const onChangeStatus = (event: React.MouseEvent) => {
+    event.preventDefault();
+    if (!order) return;
+    changeStatusMutation.mutate({
+      ...order,
+      id: order?.id,
+      orderStatus: OrderStatus.UNDER_APPROVAL,
+    });
+  };
   const onSubmit: SubmitHandler<Inputs> = (data) => {
     mutation({
       ...data,
@@ -310,7 +333,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                     </Select>
                   </FormControl>
                 )}
-                <FormControl className={clsx({ "!hidden": !isAdmin })}>
+                <FormControl className={clsx()}>
                   <InputLabel id="demo-simple-select-label">
                     {t("type_order")}
                   </InputLabel>
@@ -336,11 +359,17 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                     title={t("save")}
                     type="submit"
                   />
+                  <Button
+                    title={"На согласование"}
+                    onButtonClick={onChangeStatus}
+                    type="button"
+                  />
 
                   {isAdmin && (
                     <Button
-                      title={t("delete")}
+                      disabled={isPending}
                       onButtonClick={onDeleteClick}
+                      title={t("delete")}
                       type="button"
                     />
                   )}

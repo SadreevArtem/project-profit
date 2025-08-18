@@ -4,7 +4,7 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head />
-      <title>PVB-SpecFlow</title>
+      <title>PVB-Project Profit</title>
       <body className="antialiased">
         <Main />
         <NextScript />

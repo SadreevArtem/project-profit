@@ -51,9 +51,9 @@ export default function Home() {
         {!isAuth ? (
           <Login />
         ) : isAdmin ? (
-          <AdminPanel title="PVB-SpecFlow" />
+          <AdminPanel title="PVB-Project Profit" />
         ) : (
-          <UserPanel title="PVB-SpecFlow" />
+          <UserPanel title="PVB-Project Profit" />
         )}
       </main>
       <footer className=""></footer>

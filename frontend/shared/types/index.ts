@@ -62,6 +62,22 @@ export type Parameters = {
   additionalExpenses: number;
   otherUnplannedExpenses: number;
   totalOtherExpenses: number;
+  costOfMoney: number;
+  prepaymentToSupplier: number;
+  prepaymentFromCustomer: number;
+  deltaOnPrepayment: number;
+  deltaPaymentBeforeShipment: number;
+  requiredFundsPrepayment: number;
+  requiredFundsShipment: number;
+  costOfMoneyRub: number;
+  costOfMoneyPrepayment: number;
+  costOfMoneyShipment: number;
+  totalCostOfMoney: number;
+  companyProfit: number;
+  companyProfitMinusVAT: number;
+  companyProfitMinusTAX: number;
+  projectProfitability: number;
+  percentShareInProfit: number;
 };
 
 export type Order = {

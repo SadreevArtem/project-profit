@@ -9,6 +9,8 @@ import { TextField } from "@mui/material";
 import { Order } from "../../../../../shared/types";
 import { useEffect } from "react";
 import { OPERATIONAL_ACTIVITIES } from "../../constants";
+import { gt, negate } from "rambda";
+import clsx from "clsx";
 
 type Props = {
   register: UseFormRegister<Inputs>;
@@ -32,13 +34,48 @@ export const RubToRub: React.FC<Props> = ({
   const additionalExpenses = watch("parameters.additionalExpenses") || 0;
   const otherUnplannedExpenses =
     watch("parameters.otherUnplannedExpenses") || 0;
-
+  const purchase = watch("parameters.purchase") || 0;
+  const prepayment = watch("parameters.prepayment") || 0;
+  const prepaymentSale = watch("parameters.prepaymentSale") || 0;
+  const prepaymentToSupplier = watch("parameters.prepaymentToSupplier") || 0;
+  const prepaymentFromCustomer =
+    watch("parameters.prepaymentFromCustomer") || 0;
+  const deltaOnPrepayment = watch("parameters.deltaOnPrepayment") || 0;
+  const delivery = watch("parameters.delivery") || 0;
+  const requiredFundsPrepayment =
+    watch("parameters.requiredFundsPrepayment") || 0;
+  const costOfMoney = watch("parameters.costOfMoney") || 0;
+  const productionTime = watch("parameters.productionTime") || 0;
+  const deliveryTimeLogistics = watch("parameters.deliveryTimeLogistics") || 0;
+  const deferralPaymentByCustomer =
+    watch("parameters.deferralPaymentByCustomer") || 0;
+  const requiredFundsShipment = watch("parameters.requiredFundsShipment") || 0;
+  const costOfMoneyPrepayment = watch("parameters.costOfMoneyPrepayment") || 0;
+  const costOfMoneyShipment = watch("parameters.costOfMoneyShipment") || 0;
+  const totalCostOfMoney = watch("parameters.totalCostOfMoney") || 0;
+  const totalOtherExpenses = watch("parameters.totalOtherExpenses") || 0;
+  const companyProfit = watch("parameters.companyProfit") || 0;
+  const companyProfitMinusVAT = watch("parameters.companyProfitMinusVAT") || 0;
+  const companyProfitMinusTAX = watch("parameters.companyProfitMinusTAX") || 0;
+  const projectProfitability = watch("parameters.projectProfitability") || 0;
+  const percentShareInProfit = watch("parameters.percentShareInProfit") || 0;
   useEffect(() => {
     setValue(
       "parameters.operationalActivities",
       salesWithVAT * OPERATIONAL_ACTIVITIES
     );
   }, [setValue, salesWithVAT]);
+
+  useEffect(() => {
+    setValue("parameters.prepaymentToSupplier", purchase * prepayment * 0.01);
+  }, [setValue, purchase, prepayment]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.prepaymentFromCustomer",
+      salesWithVAT * prepaymentSale * 0.01
+    );
+  }, [setValue, salesWithVAT, prepaymentSale]);
 
   useEffect(() => {
     setValue(
@@ -51,6 +88,117 @@ export const RubToRub: React.FC<Props> = ({
     additionalExpenses,
     otherUnplannedExpenses,
   ]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.deltaOnPrepayment",
+      negate(prepaymentToSupplier - prepaymentFromCustomer)
+    );
+  }, [setValue, prepaymentToSupplier, prepaymentFromCustomer]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.deltaPaymentBeforeShipment",
+      purchase - prepaymentFromCustomer
+    );
+  }, [setValue, purchase, prepaymentFromCustomer]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.requiredFundsPrepayment",
+      gt(deltaOnPrepayment, 0) ? 0 : negate(deltaOnPrepayment)
+    );
+  }, [setValue, deltaOnPrepayment]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.requiredFundsShipment",
+      purchase + delivery - prepaymentFromCustomer
+    );
+  }, [setValue, purchase, delivery, prepaymentFromCustomer]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.costOfMoneyRub",
+      requiredFundsPrepayment * costOfMoney
+    );
+  }, [setValue, requiredFundsPrepayment, costOfMoney]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.costOfMoneyPrepayment",
+      requiredFundsPrepayment *
+        (costOfMoney * 0.01) *
+        (productionTime + deliveryTimeLogistics + deferralPaymentByCustomer)
+    );
+  }, [
+    setValue,
+    requiredFundsPrepayment,
+    costOfMoney,
+    productionTime,
+    deliveryTimeLogistics,
+    deferralPaymentByCustomer,
+  ]);
+
+  useEffect(() => {
+    const result =
+      requiredFundsShipment *
+      (costOfMoney * 0.01) *
+      (deliveryTimeLogistics + deferralPaymentByCustomer);
+    setValue("parameters.costOfMoneyShipment", +result.toFixed());
+  }, [
+    setValue,
+    requiredFundsShipment,
+    costOfMoney,
+    productionTime,
+    deliveryTimeLogistics,
+    deferralPaymentByCustomer,
+  ]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.totalCostOfMoney",
+      costOfMoneyPrepayment + costOfMoneyShipment
+    );
+  }, [setValue, costOfMoneyShipment, costOfMoneyPrepayment]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.companyProfit",
+      salesWithVAT - purchase - delivery - totalCostOfMoney - totalOtherExpenses
+    );
+  }, [
+    setValue,
+    salesWithVAT,
+    purchase,
+    delivery,
+    totalCostOfMoney,
+    totalOtherExpenses,
+  ]);
+  useEffect(() => {
+    setValue("parameters.companyProfitMinusVAT", (companyProfit / 5) * 4);
+  }, [setValue, companyProfit]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.companyProfitMinusTAX",
+      (companyProfitMinusVAT / 5) * 4
+    );
+  }, [setValue, companyProfitMinusVAT]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.projectProfitability",
+      Math.round((companyProfitMinusTAX / salesWithVAT) * 100)
+    );
+  }, [setValue, companyProfitMinusTAX, salesWithVAT]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.percentShareInProfit",
+      Math.round((additionalExpenses / companyProfitMinusTAX) * 100)
+    );
+  }, [setValue, additionalExpenses, companyProfitMinusTAX]);
 
   return (
     <>
@@ -275,6 +423,172 @@ export const RubToRub: React.FC<Props> = ({
             defaultValue={order?.parameters?.totalOtherExpenses}
             value={watch("parameters.totalOtherExpenses")}
             label={"Итого прочие расходы"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+        </div>
+      </div>
+      <div className="flex gap-8 mb-6">
+        <div className="flex flex-col gap-8 w-[400px] bg-[#e9f5f7] mt-2 p-2">
+          <h2 className="py-2 font-bold">Инвестиции:</h2>
+          <TextField
+            variant="outlined"
+            defaultValue={order?.parameters?.costOfMoney}
+            label={"Стоимость денег, %"}
+            type="number"
+            inputProps={{
+              min: 0,
+              max: 15,
+            }}
+            onChange={(event) => {
+              setValue("parameters.costOfMoney", +event.target.value);
+            }}
+          />
+
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.prepaymentToSupplier}
+            value={watch("parameters.prepaymentToSupplier")}
+            label={"Предоплата поставщику, РУБ"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.prepaymentFromCustomer}
+            value={watch("parameters.prepaymentFromCustomer")}
+            label={"Предоплата от заказчика, РУБ"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.deltaOnPrepayment}
+            value={watch("parameters.deltaOnPrepayment")}
+            label={"Дельта на предоплату, РУБ"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.deltaPaymentBeforeShipment}
+            value={watch("parameters.deltaPaymentBeforeShipment")}
+            label={"Дельта на оплату перед отгрузкой, РУБ"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.requiredFundsPrepayment}
+            value={watch("parameters.requiredFundsPrepayment")}
+            label={"Требуемые средства на предоплату, РУБ"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.requiredFundsShipment}
+            value={watch("parameters.requiredFundsShipment")}
+            label={"Требуемые средства на отгрузку, РУБ"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.costOfMoneyRub}
+            value={watch("parameters.costOfMoneyRub")}
+            label={"Стоимость денег, РУБ"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.costOfMoneyPrepayment}
+            value={watch("parameters.costOfMoneyPrepayment")}
+            label={"Стоимость денег на предоплату, РУБ"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.costOfMoneyShipment}
+            value={watch("parameters.costOfMoneyShipment")}
+            label={"Стоимость денег на отгрузку, РУБ"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.totalCostOfMoney}
+            value={watch("parameters.totalCostOfMoney")}
+            label={"Итого стоимость денег, РУБ"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+        </div>
+        <div className="flex flex-col gap-8 w-[400px] bg-[#f4faed] mt-2 p-2">
+          <h2 className="py-2 font-bold">Расчет прибыли проекта:</h2>
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.companyProfit}
+            value={watch("parameters.companyProfit")}
+            label={"Прибыль компании, РУБ"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.companyProfitMinusVAT}
+            value={watch("parameters.companyProfitMinusVAT")}
+            label={"Прибыль компании за вычетом НДС, РУБ"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.companyProfitMinusTAX}
+            value={watch("parameters.companyProfitMinusTAX")}
+            label={"Прибыль компании за вычетом налога на прибыль, РУБ"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <h2 className="font-bold">Рентабельность проекта, %</h2>
+          <TextField
+            variant="outlined"
+            disabled
+            className={clsx({
+              "bg-rose-300": projectProfitability < 20,
+              "bg-green-500": projectProfitability > 20,
+            })}
+            defaultValue={order?.parameters?.projectProfitability}
+            value={watch("parameters.projectProfitability")}
+            // label={"Рентабельность проекта, %"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <h2 className="font-bold">% доли *** в прибыли, %</h2>
+          <TextField
+            variant="outlined"
+            disabled
+            className={clsx({
+              "bg-rose-300": percentShareInProfit < 25,
+              "bg-green-500": percentShareInProfit > 25,
+            })}
+            defaultValue={order?.parameters?.percentShareInProfit}
+            value={watch("parameters.percentShareInProfit")}
             type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
