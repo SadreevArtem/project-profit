@@ -8,7 +8,6 @@ import { Inputs } from "../../OrderDetail";
 import { TextField } from "@mui/material";
 import { Order } from "../../../../../shared/types";
 import { useEffect } from "react";
-import { OPERATIONAL_ACTIVITIES } from "../../constants";
 import { gt, negate } from "rambda";
 import clsx from "clsx";
 
@@ -59,12 +58,27 @@ export const UsdToRub: React.FC<Props> = ({
   const companyProfitMinusTAX = watch("parameters.companyProfitMinusTAX") || 0;
   const projectProfitability = watch("parameters.projectProfitability") || 0;
   const percentShareInProfit = watch("parameters.percentShareInProfit") || 0;
+  const dutyTotal = watch("parameters.dutyTotal") || 0;
+  const purchaseCurrencyRate = watch("parameters.purchaseCurrencyRate") || 0;
+  const bankSellingRate = watch("parameters.bankSellingRate") || 0;
+  const dutyPercent = watch("parameters.dutyPercent") || 0;
+  const brokerage = watch("parameters.brokerage") || 0;
+  const customsVat = watch("parameters.customsVat") || 0;
+  const currentCourseRate = watch("parameters.currentCourseRate") || 0;
+  const totalPurchaseDDP = watch("parameters.totalPurchaseDDP") || 0;
+  const deltaPaymentBeforeShipment =
+    watch("parameters.deltaPaymentBeforeShipment") || 0;
+  const requiredFundsForCustoms =
+    watch("parameters.requiredFundsForCustoms") || 0;
+  const operationalActivitiesPercent =
+    watch("parameters.operationalActivitiesPercent") || 0;
+
   useEffect(() => {
     setValue(
       "parameters.operationalActivities",
-      salesWithVAT * OPERATIONAL_ACTIVITIES
+      salesWithVAT * operationalActivitiesPercent * 0.01
     );
-  }, [setValue, salesWithVAT]);
+  }, [setValue, salesWithVAT, operationalActivitiesPercent]);
 
   useEffect(() => {
     setValue("parameters.prepaymentToSupplier", purchase * prepayment * 0.01);
@@ -73,9 +87,9 @@ export const UsdToRub: React.FC<Props> = ({
   useEffect(() => {
     setValue(
       "parameters.prepaymentFromCustomer",
-      salesWithVAT * prepaymentSale * 0.01
+      (salesWithVAT * prepaymentSale * 0.01) / currentCourseRate
     );
-  }, [setValue, salesWithVAT, prepaymentSale]);
+  }, [setValue, salesWithVAT, prepaymentSale, currentCourseRate]);
 
   useEffect(() => {
     setValue(
@@ -113,16 +127,23 @@ export const UsdToRub: React.FC<Props> = ({
   useEffect(() => {
     setValue(
       "parameters.requiredFundsShipment",
-      purchase + delivery - prepaymentFromCustomer
+      totalPurchaseDDP - prepaymentFromCustomer
     );
-  }, [setValue, purchase, delivery, prepaymentFromCustomer]);
+  }, [setValue, totalPurchaseDDP, prepaymentFromCustomer]);
 
   useEffect(() => {
     setValue(
       "parameters.costOfMoneyRub",
-      requiredFundsPrepayment * costOfMoney
+      (deltaPaymentBeforeShipment + requiredFundsForCustoms) *
+        costOfMoney *
+        0.01
     );
-  }, [setValue, requiredFundsPrepayment, costOfMoney]);
+  }, [
+    setValue,
+    deltaPaymentBeforeShipment,
+    costOfMoney,
+    requiredFundsForCustoms,
+  ]);
 
   useEffect(() => {
     setValue(
@@ -165,18 +186,26 @@ export const UsdToRub: React.FC<Props> = ({
   useEffect(() => {
     setValue(
       "parameters.companyProfit",
-      salesWithVAT - purchase - delivery - totalCostOfMoney - totalOtherExpenses
+      Math.round(
+        salesWithVAT -
+          totalPurchaseDDP * currentCourseRate -
+          totalCostOfMoney * currentCourseRate -
+          totalOtherExpenses
+      )
     );
   }, [
     setValue,
     salesWithVAT,
-    purchase,
-    delivery,
+    totalPurchaseDDP,
+    currentCourseRate,
     totalCostOfMoney,
     totalOtherExpenses,
   ]);
   useEffect(() => {
-    setValue("parameters.companyProfitMinusVAT", (companyProfit / 5) * 4);
+    setValue(
+      "parameters.companyProfitMinusVAT",
+      companyProfit - companyProfit * 0.25
+    );
   }, [setValue, companyProfit]);
 
   useEffect(() => {
@@ -200,6 +229,41 @@ export const UsdToRub: React.FC<Props> = ({
     );
   }, [setValue, additionalExpenses, companyProfitMinusTAX]);
 
+  useEffect(() => {
+    setValue("parameters.brokerage", (purchase + delivery + dutyTotal) * 0.02);
+  }, [setValue, purchase, delivery, dutyTotal]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.currentCourseRate",
+      purchaseCurrencyRate + purchaseCurrencyRate * bankSellingRate * 0.01
+    );
+  }, [setValue, purchaseCurrencyRate, bankSellingRate]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.dutyTotal",
+      (purchase + delivery) * dutyPercent * 0.01
+    );
+  }, [setValue, purchase, delivery, dutyPercent]);
+  useEffect(() => {
+    setValue(
+      "parameters.customsVat",
+      (purchase + delivery + brokerage + dutyTotal) * 0.2
+    );
+  }, [setValue, purchase, delivery, brokerage, dutyTotal]);
+
+  useEffect(() => {
+    setValue(
+      "parameters.totalPurchaseDDP",
+      purchase + brokerage + dutyTotal + customsVat + delivery
+    );
+  }, [setValue, purchase, brokerage, dutyTotal, delivery, customsVat]);
+
+  useEffect(() => {
+    setValue("parameters.requiredFundsForCustoms", totalPurchaseDDP - purchase);
+  }, [setValue, purchase, totalPurchaseDDP]);
+
   return (
     <>
       <div className="flex gap-8 mb-6">
@@ -208,8 +272,42 @@ export const UsdToRub: React.FC<Props> = ({
           <TextField
             variant="outlined"
             required
+            defaultValue={order?.parameters?.purchaseCurrencyRate}
+            label={"Курс валюты закупки"}
+            type="number"
+            inputProps={{
+              min: 0,
+            }}
+            onChange={(event) => {
+              setValue("parameters.purchaseCurrencyRate", +event.target.value);
+            }}
+          />
+          <TextField
+            variant="outlined"
+            required
+            defaultValue={order?.parameters?.bankSellingRate}
+            label={"Курс продажи банком, %"}
+            type="number"
+            inputProps={{
+              min: 0,
+            }}
+            onChange={(event) => {
+              setValue("parameters.bankSellingRate", +event.target.value);
+            }}
+          />
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.currentCourseRate}
+            label={"Расчетный курс, Руб"}
+            type="number"
+            value={watch("parameters.currentCourseRate")}
+          />
+          <TextField
+            variant="outlined"
+            required
             defaultValue={order?.parameters?.purchase}
-            label={"Закупка, РУБ"}
+            label={"Закупка, в валюте"}
             type="number"
             inputProps={{
               min: 0,
@@ -272,7 +370,7 @@ export const UsdToRub: React.FC<Props> = ({
             variant="outlined"
             required
             defaultValue={order?.parameters?.salesWithVAT}
-            label={"Продажа с НДС"}
+            label={"Продажа с НДС, РУБ"}
             inputProps={{
               min: 0,
             }}
@@ -282,6 +380,19 @@ export const UsdToRub: React.FC<Props> = ({
             }}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            required
+            defaultValue={order?.parameters?.dutyPercent}
+            label={"Пошлина, %"}
+            inputProps={{
+              min: 0,
+            }}
+            type="number"
+            onChange={(event) => {
+              setValue("parameters.dutyPercent", +event.target.value);
+            }}
+          />
           <TextField
             variant="outlined"
             required
@@ -331,12 +442,12 @@ export const UsdToRub: React.FC<Props> = ({
       </div>
       <div className="flex gap-8 mb-6">
         <div className="flex flex-col gap-8 w-[400px] bg-[#e9f5f7] mt-2 p-2">
-          <h2 className="py-2 font-bold">Логистика:</h2>
+          <h2 className="py-2 font-bold">Таможня и логистика:</h2>
           <TextField
             variant="outlined"
             required
             defaultValue={order?.parameters?.delivery}
-            label={"Доставка, РУБ"}
+            label={"Доставка, в валюте"}
             type="number"
             inputProps={{
               min: 0,
@@ -377,14 +488,62 @@ export const UsdToRub: React.FC<Props> = ({
             }}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.dutyTotal}
+            label={"Пошлина в валюте"}
+            type="number"
+            value={watch("parameters.dutyTotal")}
+          />
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.brokerage}
+            label={"Брокерские"}
+            type="number"
+            value={watch("parameters.brokerage")}
+          />
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.customsVat}
+            label={"НДС на таможне"}
+            type="number"
+            value={watch("parameters.customsVat")}
+          />
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.totalPurchaseDDP}
+            label={"Итого закупка на DDP"}
+            type="number"
+            value={watch("parameters.totalPurchaseDDP")}
+          />
         </div>
         <div className="flex flex-col gap-8 w-[400px] bg-[#e9f5f7] mt-2 p-2">
           <h2 className="py-2 font-bold">Прочие расходы:</h2>
           <TextField
             variant="outlined"
+            required
+            defaultValue={order?.parameters?.operationalActivitiesPercent}
+            label={"Операционная деятельность, %"}
+            type="number"
+            inputProps={{
+              min: 0,
+            }}
+            onChange={(event) => {
+              setValue(
+                "parameters.operationalActivitiesPercent",
+                +event.target.value
+              );
+            }}
+          />
+          <TextField
+            variant="outlined"
             disabled
             defaultValue={order?.parameters?.operationalActivities}
-            label={"Операционная деятельность, РУБ"}
+            label={"Операционная деятельность, руб"}
             type="number"
             value={watch("parameters.operationalActivities")}
           />
@@ -450,7 +609,7 @@ export const UsdToRub: React.FC<Props> = ({
             disabled
             defaultValue={order?.parameters?.prepaymentToSupplier}
             value={watch("parameters.prepaymentToSupplier")}
-            label={"Предоплата поставщику, РУБ"}
+            label={"Предоплата поставщику, в валюте"}
             type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
@@ -459,7 +618,7 @@ export const UsdToRub: React.FC<Props> = ({
             disabled
             defaultValue={order?.parameters?.prepaymentFromCustomer}
             value={watch("parameters.prepaymentFromCustomer")}
-            label={"Предоплата от заказчика, РУБ"}
+            label={"Предоплата от заказчика, в валюте"}
             type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
@@ -480,6 +639,14 @@ export const UsdToRub: React.FC<Props> = ({
             label={"Дельта на оплату перед отгрузкой, РУБ"}
             type="number"
           />
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.requiredFundsForCustoms}
+            value={watch("parameters.requiredFundsForCustoms")}
+            label={"Требуемые средства для таможни"}
+            type="number"
+          />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
@@ -495,7 +662,7 @@ export const UsdToRub: React.FC<Props> = ({
             disabled
             defaultValue={order?.parameters?.requiredFundsShipment}
             value={watch("parameters.requiredFundsShipment")}
-            label={"Требуемые средства на отгрузку, РУБ"}
+            label={"Требуемые средства на отгрузку"}
             type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
@@ -504,7 +671,7 @@ export const UsdToRub: React.FC<Props> = ({
             disabled
             defaultValue={order?.parameters?.costOfMoneyRub}
             value={watch("parameters.costOfMoneyRub")}
-            label={"Стоимость денег, РУБ"}
+            label={"Стоимость денег мес"}
             type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}

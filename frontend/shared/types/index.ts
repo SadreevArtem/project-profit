@@ -59,6 +59,7 @@ export type Parameters = {
   deliveryTimeLogistics: number;
   deferralPaymentByCustomer: number;
   operationalActivities: number;
+  operationalActivitiesPercent: number;
   additionalExpenses: number;
   otherUnplannedExpenses: number;
   totalOtherExpenses: number;
@@ -82,6 +83,15 @@ export type Parameters = {
   withoutVat: number;
   salesVat: number;
   salesWithoutVat: number;
+  purchaseCurrencyRate: number;
+  bankSellingRate: number;
+  currentCourseRate: number;
+  dutyPercent: number;
+  dutyTotal: number;
+  brokerage: number;
+  customsVat: number;
+  totalPurchaseDDP: number;
+  requiredFundsForCustoms: number;
 };
 
 export type Order = {
