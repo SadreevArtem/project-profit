@@ -78,6 +78,10 @@ export type Parameters = {
   companyProfitMinusTAX: number;
   projectProfitability: number;
   percentShareInProfit: number;
+  vat: number;
+  withoutVat: number;
+  salesVat: number;
+  salesWithoutVat: number;
 };
 
 export type Order = {

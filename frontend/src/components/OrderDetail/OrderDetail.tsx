@@ -27,6 +27,8 @@ import { useTranslations } from "next-intl";
 import { useJwtToken } from "../../../shared/hooks/useJwtToken";
 import clsx from "clsx";
 import { RubToRub } from "./components/RubToRub";
+import { UsdToRub } from "./components/UsdToRub";
+import { RubToRubVat } from "./components/RubToRubVat";
 
 type Props = {
   id: number;
@@ -202,6 +204,26 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
       case "RUBTORUB":
         return (
           <RubToRub
+            register={register}
+            watch={watch}
+            errors={errors}
+            setValue={setValue}
+            order={order}
+          />
+        );
+      case "USDTORUB":
+        return (
+          <UsdToRub
+            register={register}
+            watch={watch}
+            errors={errors}
+            setValue={setValue}
+            order={order}
+          />
+        );
+      case "RUBTORUBVAT":
+        return (
+          <RubToRubVat
             register={register}
             watch={watch}
             errors={errors}

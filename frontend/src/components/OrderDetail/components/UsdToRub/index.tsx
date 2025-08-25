@@ -20,7 +20,7 @@ type Props = {
   watch: UseFormWatch<Inputs>;
 };
 
-export const RubToRub: React.FC<Props> = ({
+export const UsdToRub: React.FC<Props> = ({
   register,
   errors,
   order,
@@ -176,7 +176,7 @@ export const RubToRub: React.FC<Props> = ({
     totalOtherExpenses,
   ]);
   useEffect(() => {
-    setValue("parameters.companyProfitMinusVAT", companyProfit * 0.75);
+    setValue("parameters.companyProfitMinusVAT", (companyProfit / 5) * 4);
   }, [setValue, companyProfit]);
 
   useEffect(() => {

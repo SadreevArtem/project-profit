@@ -20,7 +20,7 @@ type Props = {
   watch: UseFormWatch<Inputs>;
 };
 
-export const RubToRub: React.FC<Props> = ({
+export const RubToRubVat: React.FC<Props> = ({
   register,
   errors,
   order,
@@ -59,6 +59,9 @@ export const RubToRub: React.FC<Props> = ({
   const companyProfitMinusTAX = watch("parameters.companyProfitMinusTAX") || 0;
   const projectProfitability = watch("parameters.projectProfitability") || 0;
   const percentShareInProfit = watch("parameters.percentShareInProfit") || 0;
+  const vat = watch("parameters.vat") || 0;
+  const salesVat = watch("parameters.salesVat") || 0;
+  const salesWithoutVat = watch("parameters.salesWithoutVat") || 0;
   useEffect(() => {
     setValue(
       "parameters.operationalActivities",
@@ -176,7 +179,7 @@ export const RubToRub: React.FC<Props> = ({
     totalOtherExpenses,
   ]);
   useEffect(() => {
-    setValue("parameters.companyProfitMinusVAT", companyProfit * 0.75);
+    setValue("parameters.companyProfitMinusVAT", (companyProfit / 5) * 4);
   }, [setValue, companyProfit]);
 
   useEffect(() => {
@@ -199,7 +202,23 @@ export const RubToRub: React.FC<Props> = ({
       Math.round((additionalExpenses / companyProfitMinusTAX) * 100)
     );
   }, [setValue, additionalExpenses, companyProfitMinusTAX]);
+  useEffect(() => {
+    setValue("parameters.vat", purchase * 0.25);
+  }, [setValue, purchase]);
 
+  useEffect(() => {
+    setValue("parameters.withoutVat", purchase - vat);
+  }, [setValue, purchase, vat]);
+
+  useEffect(() => {
+    setValue("parameters.salesVat", salesWithVAT * 0.25);
+  }, [setValue, salesWithVAT]);
+  useEffect(() => {
+    setValue("parameters.salesWithoutVat", salesWithVAT - salesVat);
+  }, [setValue, salesWithVAT, salesVat]);
+  useEffect(() => {
+    setValue("parameters.additionalExpenses", salesWithoutVat * 0.1);
+  }, [setValue, salesWithoutVat]);
   return (
     <>
       <div className="flex gap-8 mb-6">
@@ -219,6 +238,22 @@ export const RubToRub: React.FC<Props> = ({
             }}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.vat}
+            value={watch("parameters.vat")}
+            label={"НДС"}
+            type="number"
+          />
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.withoutVat}
+            value={watch("parameters.withoutVat")}
+            label={"Без НДС"}
+            type="number"
+          />
           <TextField
             variant="outlined"
             required
@@ -282,6 +317,22 @@ export const RubToRub: React.FC<Props> = ({
             }}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.salesVat}
+            value={watch("parameters.salesVat")}
+            label={"НДС"}
+            type="number"
+          />
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.salesWithoutVat}
+            value={watch("parameters.salesWithoutVat")}
+            label={"Без НДС"}
+            type="number"
+          />
           <TextField
             variant="outlined"
             required
@@ -390,16 +441,13 @@ export const RubToRub: React.FC<Props> = ({
           />
           <TextField
             variant="outlined"
+            disabled
             defaultValue={order?.parameters?.additionalExpenses}
+            value={watch("parameters.additionalExpenses")}
             label={"Дополнительные расходы, РУБ"}
             type="number"
-            inputProps={{
-              min: 0,
-            }}
-            onChange={(event) => {
-              setValue("parameters.additionalExpenses", +event.target.value);
-            }}
           />
+
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
