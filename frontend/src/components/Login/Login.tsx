@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { PasswordTextField } from "../PasswordTextField/PasswordTextField";
@@ -18,7 +18,7 @@ type Inputs = {
 };
 
 export const Login: React.FC = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
+  // const [isSignUp, setIsSignUp] = useState(false);
   const {
     handleSubmit,
     control,
@@ -27,9 +27,9 @@ export const Login: React.FC = () => {
   const auth = useAuthStore((state) => state.auth);
   const t = useTranslations("Login");
   const signInFunction = (data: Inputs) => api.signInRequest(data);
-  const signUpFunction = (data: Inputs) => api.signUpRequest(data);
+  // const signUpFunction = (data: Inputs) => api.signUpRequest(data);
   const { mutate: mutation, isPending } = useMutation({
-    mutationFn: isSignUp ? signUpFunction : signInFunction,
+    mutationFn: signInFunction,
     onSuccess: async (data) => {
       const token = data.access_token;
 
@@ -61,7 +61,7 @@ export const Login: React.FC = () => {
             />
             <h2 className="text-2xl font-bold text-primary">PROJECT PROFIT</h2>
           </div>
-          {isSignUp ? (
+          {/* {isSignUp ? (
             <div className="flex gap-4 text-primary">
               <p className="inline-block">Уже есть аккаунт?</p>
               <p
@@ -81,7 +81,7 @@ export const Login: React.FC = () => {
                 Зарегистрируйтесь
               </p>
             </div>
-          )}
+          )} */}
           <Controller
             name="username"
             rules={{ required: true }}
@@ -93,7 +93,7 @@ export const Login: React.FC = () => {
           {errors.username && (
             <span className="text-red-500">{t("requiredName")}</span>
           )}
-          {isSignUp && (
+          {/* {isSignUp && (
             <>
               <Controller
                 name="email"
@@ -107,7 +107,7 @@ export const Login: React.FC = () => {
                 <span className="text-red-500">{t("requiredName")}</span>
               )}
             </>
-          )}
+          )} */}
 
           <Controller
             name="password"
@@ -127,7 +127,7 @@ export const Login: React.FC = () => {
             <span className="text-red-500">{t("requiredPassword")}</span>
           )}
           <button className="button" type="submit">
-            {t(isSignUp ? "signUp" : "signIn")}
+            {t("signIn")}
           </button>
           <div>
             <p className="inline-block text-primary mr-5">
