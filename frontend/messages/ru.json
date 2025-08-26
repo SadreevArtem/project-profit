@@ -39,7 +39,8 @@
     "production_manager": "Ответсвенный за производство",
     "control_manager": "Отвественный за контроль",
     "endContract": "Окончание доступа",
-    "account": "Личный кабинет"
+    "account": "Личный кабинет",
+    "boss": "Босс"
   },
   "DirectoryDetail": {
     "edit": "Редактирование справочника",
@@ -62,7 +63,8 @@
     "status": "Статус",
     "DRAFT": "Черновик",
     "UNDER_APPROVAL": "На согласовании",
-    "AGREED": "Согласовано"
+    "AGREED": "Согласовано",
+    "REJECTED": "Отклонен"
   },
   "OrderDetail": {
     "name": "Наименование",
@@ -85,6 +87,7 @@
     "DRAFT": "Черновик",
     "UNDER_APPROVAL": "На согласовании",
     "AGREED": "Согласовано",
+    "REJECTED": "Отклонен",
     "type_order": "Тип заказа",
     "RUBTORUB": "В рублях",
     "USDTORUB": "В валюте",

@@ -2,8 +2,7 @@ import { TextField } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import { useRouter } from "next/router";
-import { FilesModel, User } from "../../../shared/types";
+import { User } from "../../../shared/types";
 import { useAuthStore } from "../../../shared/stores/auth";
 import { Button } from "../Button";
 import { appToast } from "../AppToast/components/lib/appToast";
@@ -13,7 +12,6 @@ import dayjs from "dayjs";
 import { DatePicker } from "@mui/x-date-pickers";
 import { useJwtToken } from "../../../shared/hooks/useJwtToken";
 import Link from "next/link";
-import { ImageInput } from "../ImageInput/ImageInput";
 
 type Props = {
   id: number;
@@ -24,12 +22,12 @@ export const Account: React.FC<Props> = ({ id }) => {
   const token = useAuthStore((state) => state.token);
   const t = useTranslations("UserDetail");
   const queryClient = useQueryClient();
-  const router = useRouter();
+  // const router = useRouter();
   const { endContract } = useJwtToken();
   const isAccess = Boolean(endContract) && dayjs().isBefore(endContract);
   const getUserById = () => api.getUserByIdAdminRequest(id, token);
   const getQueryKey = (id: number) => ["user"].concat(id.toString());
-  const uploadImageFunc = (file: File) => api.uploadImage(file);
+  // const uploadImageFunc = (file: File) => api.uploadImage(file);
 
   const { data: user, isLoading } = useQuery<User>({
     queryKey: getQueryKey(id),
@@ -44,19 +42,19 @@ export const Account: React.FC<Props> = ({ id }) => {
   } = useForm<Inputs>();
 
   const updateUserFunc = (input: User) => api.updateUserRequest(input, token);
-  const uploadImageMutation = useMutation({
-    mutationFn: uploadImageFunc,
-    onSuccess: (res: FilesModel) => {
-      appToast.success("Успешно загружено");
-      setValue("avatar", res.path);
-    },
-  });
-  const uploadImageHandler: (image?: File | null) => void = (image) => {
-    uploadImageMutation.mutate(image as File);
-  };
-  const deleteImageHandler = async () => {
-    setValue("avatar", "");
-  };
+  // const uploadImageMutation = useMutation({
+  //   mutationFn: uploadImageFunc,
+  //   onSuccess: (res: FilesModel) => {
+  //     appToast.success("Успешно загружено");
+  //     setValue("avatar", res.path);
+  //   },
+  // });
+  // const uploadImageHandler: (image?: File | null) => void = (image) => {
+  //   uploadImageMutation.mutate(image as File);
+  // };
+  // const deleteImageHandler = async () => {
+  //   setValue("avatar", "");
+  // };
   const mutation = useMutation({
     mutationFn: updateUserFunc,
     onSuccess: () => {
@@ -92,10 +90,10 @@ export const Account: React.FC<Props> = ({ id }) => {
         <section className="container px-40 rounded-lg pt-4 mt-[60px]">
           <div className="flex mt-8 justify-between gap-4">
             <h2 className="text-xl">{t("account")}</h2>
-            <Button
-              onButtonClick={() => router.back()}
+            {/* <Button
+              onButtonClick={() => router.push("/")}
               title={t("back")}
-            ></Button>
+            ></Button> */}
           </div>
           <div className="flex justify-between gap-8">
             <form
@@ -179,7 +177,7 @@ export const Account: React.FC<Props> = ({ id }) => {
                 <Button title={t("save")} type="submit" />
               </div>
             </form>
-            <div className="flex w-full flex-col">
+            {/* <div className="flex w-full flex-col">
               <Controller
                 control={control}
                 name="avatar"
@@ -195,7 +193,7 @@ export const Account: React.FC<Props> = ({ id }) => {
                   />
                 )}
               />
-            </div>
+            </div> */}
           </div>
           {!isAccess && (
             <div>

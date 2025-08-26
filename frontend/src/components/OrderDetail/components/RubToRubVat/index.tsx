@@ -1,9 +1,4 @@
-import {
-  FieldErrors,
-  UseFormRegister,
-  UseFormSetValue,
-  UseFormWatch,
-} from "react-hook-form";
+import { FieldErrors, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { Inputs } from "../../OrderDetail";
 import { TextField } from "@mui/material";
 import { Order } from "../../../../../shared/types";
@@ -13,22 +8,20 @@ import { gt, negate } from "rambda";
 import clsx from "clsx";
 
 type Props = {
-  register: UseFormRegister<Inputs>;
   errors: FieldErrors<Inputs>;
   order?: Order;
   setValue: UseFormSetValue<Inputs>;
   watch: UseFormWatch<Inputs>;
+  isAgreed: boolean;
 };
 
 export const RubToRubVat: React.FC<Props> = ({
-  register,
+  isAgreed,
   errors,
   order,
   setValue,
   watch,
 }) => {
-  console.log(register);
-
   const salesWithVAT = watch("parameters.salesWithVAT");
   const operationalActivities = watch("parameters.operationalActivities") || 0;
   const additionalExpenses = watch("parameters.additionalExpenses") || 0;
@@ -227,6 +220,7 @@ export const RubToRubVat: React.FC<Props> = ({
           <TextField
             variant="outlined"
             required
+            disabled={isAgreed}
             defaultValue={order?.parameters?.purchase}
             label={"Закупка, РУБ"}
             type="number"
@@ -257,6 +251,7 @@ export const RubToRubVat: React.FC<Props> = ({
           <TextField
             variant="outlined"
             required
+            disabled={isAgreed}
             defaultValue={order?.parameters?.productionTime}
             label={"Срок производсва, мес"}
             type="number"
@@ -273,6 +268,7 @@ export const RubToRubVat: React.FC<Props> = ({
           <TextField
             variant="outlined"
             required
+            disabled={isAgreed}
             defaultValue={order?.parameters?.prepayment}
             label={"Предоплата, %"}
             type="number"
@@ -288,6 +284,7 @@ export const RubToRubVat: React.FC<Props> = ({
           <TextField
             variant="outlined"
             required
+            disabled={isAgreed}
             defaultValue={order?.parameters?.paymentBeforeShipment}
             label={"Перед отгрузкой, %"}
             type="number"
@@ -306,6 +303,7 @@ export const RubToRubVat: React.FC<Props> = ({
           <TextField
             variant="outlined"
             required
+            disabled={isAgreed}
             defaultValue={order?.parameters?.salesWithVAT}
             label={"Продажа с НДС"}
             inputProps={{
@@ -336,6 +334,7 @@ export const RubToRubVat: React.FC<Props> = ({
           <TextField
             variant="outlined"
             required
+            disabled={isAgreed}
             defaultValue={order?.parameters?.deliveryTime}
             label={"Срок поставки, мес"}
             type="number"
@@ -348,6 +347,7 @@ export const RubToRubVat: React.FC<Props> = ({
           <TextField
             variant="outlined"
             required
+            disabled={isAgreed}
             defaultValue={order?.parameters?.prepaymentSale}
             label={"Предоплата, %"}
             inputProps={{
@@ -363,6 +363,7 @@ export const RubToRubVat: React.FC<Props> = ({
           <TextField
             variant="outlined"
             required
+            disabled={isAgreed}
             defaultValue={order?.parameters?.paymentBeforeShipmentSale}
             label={"Перед отгрузкой, %"}
             type="number"
@@ -386,6 +387,7 @@ export const RubToRubVat: React.FC<Props> = ({
           <TextField
             variant="outlined"
             required
+            disabled={isAgreed}
             defaultValue={order?.parameters?.delivery}
             label={"Доставка, РУБ"}
             type="number"
@@ -400,6 +402,7 @@ export const RubToRubVat: React.FC<Props> = ({
           <TextField
             variant="outlined"
             required
+            disabled={isAgreed}
             defaultValue={order?.parameters?.deliveryTimeLogistics}
             label={"Срок поставки, мес"}
             type="number"
@@ -414,6 +417,7 @@ export const RubToRubVat: React.FC<Props> = ({
           <TextField
             variant="outlined"
             required
+            disabled={isAgreed}
             defaultValue={order?.parameters?.deferralPaymentByCustomer}
             label={"Отсрочка оплаты заказчика"}
             type="number"
@@ -451,6 +455,7 @@ export const RubToRubVat: React.FC<Props> = ({
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
+            disabled={isAgreed}
             defaultValue={order?.parameters?.otherUnplannedExpenses}
             label={"Прочие незапланированные расходы"}
             type="number"
@@ -481,6 +486,7 @@ export const RubToRubVat: React.FC<Props> = ({
           <h2 className="py-2 font-bold">Инвестиции:</h2>
           <TextField
             variant="outlined"
+            disabled={isAgreed}
             defaultValue={order?.parameters?.costOfMoney}
             label={"Стоимость денег, %"}
             type="number"

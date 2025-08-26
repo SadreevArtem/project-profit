@@ -25,12 +25,14 @@ export type User = {
 export enum UserRole {
   ADMIN = "admin",
   TENDER_MANAGER = "tender_manager",
+  BOSS = "boss",
 }
 
 export enum OrderStatus {
   DRAFT = "DRAFT",
   UNDER_APPROVAL = "UNDER_APPROVAL",
   AGREED = "AGREED",
+  REJECTED = "REJECTED",
 }
 
 export enum TypeOrder {

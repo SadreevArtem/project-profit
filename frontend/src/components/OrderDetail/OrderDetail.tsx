@@ -1,7 +1,5 @@
 import {
-  Checkbox,
   FormControl,
-  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
@@ -47,7 +45,8 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
   const [customer, setCustomer] = React.useState<number>(0);
   const [owner, setOwner] = React.useState<number>(0);
   const router = useRouter();
-  const { sub } = useJwtToken();
+  const { sub, username } = useJwtToken();
+  const isBoss = username === "Boss";
   const isAdmin = Number(sub) === 1;
 
   const getCustomers = () => api.getAllCustomersRequest(token);
@@ -167,6 +166,25 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
       orderStatus: OrderStatus.UNDER_APPROVAL,
     });
   };
+  const onChangeStatusAgreed = (event: React.MouseEvent) => {
+    event.preventDefault();
+    if (!order) return;
+    changeStatusMutation.mutate({
+      ...order,
+      id: order?.id,
+      orderStatus: OrderStatus.AGREED,
+    });
+  };
+  const onChangeStatusRejected = (event: React.MouseEvent) => {
+    event.preventDefault();
+    if (!order) return;
+    changeStatusMutation.mutate({
+      ...order,
+      id: order?.id,
+      orderStatus: OrderStatus.REJECTED,
+    });
+  };
+  const isAgreed = order?.orderStatus === OrderStatus.AGREED;
   const onSubmit: SubmitHandler<Inputs> = (data) => {
     mutation({
       ...data,
@@ -204,7 +222,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
       case "RUBTORUB":
         return (
           <RubToRub
-            register={register}
+            isAgreed={isAgreed}
             watch={watch}
             errors={errors}
             setValue={setValue}
@@ -214,7 +232,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
       case "USDTORUB":
         return (
           <UsdToRub
-            register={register}
+            isAgreed={isAgreed}
             watch={watch}
             errors={errors}
             setValue={setValue}
@@ -224,7 +242,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
       case "RUBTORUBVAT":
         return (
           <RubToRubVat
-            register={register}
+            isAgreed={isAgreed}
             watch={watch}
             errors={errors}
             setValue={setValue}
@@ -257,6 +275,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                 <TextField
                   variant="outlined"
                   label={t("contractNumber")}
+                  disabled={isBoss || isAgreed}
                   {...register("contractNumber", { required: true })}
                 />
                 {errors.contractNumber && (
@@ -266,6 +285,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                 <TextField
                   variant="outlined"
                   label={t("complectName")}
+                  disabled={isBoss || isAgreed}
                   {...register("complectName", { required: true })}
                 />
                 {errors.complectName && (
@@ -278,8 +298,8 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                   <Select
                     labelId="demo-simple-select-label"
                     id="demo-simple-select"
+                    disabled={isBoss || isLoadingCustomers || isAgreed}
                     value={(customer ?? 0).toString()}
-                    disabled={isLoadingCustomers}
                     label={t("customerName")}
                     onChange={handleChangeCustomer}
                   >
@@ -322,7 +342,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                     labelId="demo-simple-select-label"
                     id="demo-simple-select"
                     value={(owner ?? 0).toString()}
-                    disabled={isLoadingOwners}
+                    disabled={isLoadingOwners || isBoss}
                     label={t("owner")}
                     onChange={handleChangeOwner}
                   >
@@ -365,6 +385,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                     value={typeOrder}
                     defaultValue={order?.typeOrder}
                     label={t("type_order")}
+                    disabled={isBoss || isAgreed}
                     onChange={handleChangeTypeOrder}
                   >
                     {Object.values(TypeOrder).map((item, i) => (
@@ -376,16 +397,44 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                 </FormControl>
 
                 <div className="flex gap-4">
-                  <Button
-                    disabled={isPending}
-                    title={t("save")}
-                    type="submit"
-                  />
-                  <Button
-                    title={"На согласование"}
-                    onButtonClick={onChangeStatus}
-                    type="button"
-                  />
+                  {isBoss ? (
+                    <>
+                      <Button
+                        disabled={isPending}
+                        title={"согласовать"}
+                        onButtonClick={onChangeStatusAgreed}
+                        type="button"
+                      />
+                      <Button
+                        title={"отклонить"}
+                        onButtonClick={onChangeStatusRejected}
+                        type="button"
+                      />
+                    </>
+                  ) : (
+                    <>
+                      {isEdit && isAgreed ? (
+                        <>
+                          <h2 className="font-bold text-xl bg-green-200 p-2 rounded-xl">
+                            Заказ согласован
+                          </h2>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            disabled={isPending}
+                            title={t("save")}
+                            type="submit"
+                          />
+                          <Button
+                            title={"На согласование"}
+                            onButtonClick={onChangeStatus}
+                            type="button"
+                          />
+                        </>
+                      )}
+                    </>
+                  )}
 
                   {isAdmin && (
                     <Button
@@ -396,7 +445,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                     />
                   )}
                 </div>
-                <div className="flex flex-col">
+                {/* <div className="flex flex-col">
                   <FormControlLabel
                     control={
                       <Checkbox
@@ -408,7 +457,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
                     }
                     label={t("documentation_sheet")}
                   />
-                </div>
+                </div> */}
               </form>
             </div>
           }

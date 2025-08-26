@@ -65,10 +65,12 @@ export const Orders = () => {
                     </TableCell>
                     <TableCell
                       className={clsx({
-                        "!bg-pink-500 !text-white":
+                        "!bg-orange-500 !text-white":
                           row.orderStatus === OrderStatus.UNDER_APPROVAL,
                         "!bg-green-500": row.orderStatus === OrderStatus.AGREED,
                         "!bg-slate-400": row.orderStatus === OrderStatus.DRAFT,
+                        "!bg-pink-300":
+                          row.orderStatus === OrderStatus.REJECTED,
                       })}
                     >
                       {t(row.orderStatus)}
