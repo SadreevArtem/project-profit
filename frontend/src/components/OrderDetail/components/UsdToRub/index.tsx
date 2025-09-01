@@ -5,6 +5,7 @@ import { Order } from "../../../../../shared/types";
 import { useEffect } from "react";
 import { gt, negate } from "rambda";
 import clsx from "clsx";
+import { FormattedInput } from "@/components/FormattedInput";
 
 type Props = {
   errors: FieldErrors<Inputs>;
@@ -65,7 +66,7 @@ export const UsdToRub: React.FC<Props> = ({
     watch("parameters.requiredFundsForCustoms") || 0;
   const operationalActivitiesPercent =
     watch("parameters.operationalActivitiesPercent") || 0;
-
+  const costOfMoneyRub = watch("parameters.costOfMoneyRub") || 0;
   useEffect(() => {
     setValue(
       "parameters.operationalActivities",
@@ -80,7 +81,7 @@ export const UsdToRub: React.FC<Props> = ({
   useEffect(() => {
     setValue(
       "parameters.prepaymentFromCustomer",
-      (salesWithVAT * prepaymentSale * 0.01) / currentCourseRate
+      Math.round((salesWithVAT * prepaymentSale * 0.01) / currentCourseRate)
     );
   }, [setValue, salesWithVAT, prepaymentSale, currentCourseRate]);
 
@@ -197,14 +198,14 @@ export const UsdToRub: React.FC<Props> = ({
   useEffect(() => {
     setValue(
       "parameters.companyProfitMinusVAT",
-      companyProfit - companyProfit * 0.25
+      companyProfit - companyProfit * 0.2
     );
   }, [setValue, companyProfit]);
 
   useEffect(() => {
     setValue(
       "parameters.companyProfitMinusTAX",
-      (companyProfitMinusVAT / 5) * 4
+      companyProfitMinusVAT - companyProfitMinusVAT * 0.25
     );
   }, [setValue, companyProfitMinusVAT]);
 
@@ -223,26 +224,34 @@ export const UsdToRub: React.FC<Props> = ({
   }, [setValue, additionalExpenses, companyProfitMinusTAX]);
 
   useEffect(() => {
-    setValue("parameters.brokerage", (purchase + delivery + dutyTotal) * 0.02);
+    setValue(
+      "parameters.brokerage",
+      Math.round((purchase + delivery + dutyTotal) * 0.02)
+    );
   }, [setValue, purchase, delivery, dutyTotal]);
 
   useEffect(() => {
     setValue(
       "parameters.currentCourseRate",
-      purchaseCurrencyRate + purchaseCurrencyRate * bankSellingRate * 0.01
+      parseFloat(
+        (
+          purchaseCurrencyRate +
+          purchaseCurrencyRate * bankSellingRate * 0.01
+        ).toFixed(2)
+      )
     );
   }, [setValue, purchaseCurrencyRate, bankSellingRate]);
 
   useEffect(() => {
     setValue(
       "parameters.dutyTotal",
-      (purchase + delivery) * dutyPercent * 0.01
+      Math.round((purchase + delivery) * dutyPercent * 0.01)
     );
   }, [setValue, purchase, delivery, dutyPercent]);
   useEffect(() => {
     setValue(
       "parameters.customsVat",
-      (purchase + delivery + brokerage + dutyTotal) * 0.2
+      Math.round((purchase + delivery + brokerage + dutyTotal) * 0.2)
     );
   }, [setValue, purchase, delivery, brokerage, dutyTotal]);
 
@@ -296,21 +305,14 @@ export const UsdToRub: React.FC<Props> = ({
             defaultValue={order?.parameters?.currentCourseRate}
             label={"Расчетный курс, Руб"}
             type="number"
-            value={watch("parameters.currentCourseRate")}
+            value={currentCourseRate}
           />
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.purchase}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.purchase || 0}
             label={"Закупка, в валюте"}
-            type="number"
-            inputProps={{
-              min: 0,
-            }}
-            onChange={(event) => {
-              setValue("parameters.purchase", +event.target.value);
-            }}
+            nameInput="purchase"
+            setValue={setValue}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
@@ -365,19 +367,12 @@ export const UsdToRub: React.FC<Props> = ({
         </div>
         <div className="flex flex-col gap-8 px-2 w-[400px] bg-[#ffe3ed]">
           <h2 className="font-bold">Продажа:</h2>
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.salesWithVAT}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.salesWithVAT || 0}
+            nameInput="salesWithVAT"
             label={"Продажа с НДС, РУБ"}
-            inputProps={{
-              min: 0,
-            }}
-            type="number"
-            onChange={(event) => {
-              setValue("parameters.salesWithVAT", +event.target.value);
-            }}
+            setValue={setValue}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
@@ -447,19 +442,12 @@ export const UsdToRub: React.FC<Props> = ({
       <div className="flex gap-8 mb-6">
         <div className="flex flex-col gap-8 w-[400px] bg-[#e9f5f7] mt-2 p-2">
           <h2 className="py-2 font-bold">Таможня и логистика:</h2>
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.delivery}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.delivery || 0}
             label={"Доставка, в валюте"}
-            type="number"
-            inputProps={{
-              min: 0,
-            }}
-            onChange={(event) => {
-              setValue("parameters.delivery", +event.target.value);
-            }}
+            nameInput="delivery"
+            setValue={setValue}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
@@ -500,32 +488,28 @@ export const UsdToRub: React.FC<Props> = ({
             disabled
             defaultValue={order?.parameters?.dutyTotal}
             label={"Пошлина в валюте"}
-            type="number"
-            value={watch("parameters.dutyTotal")}
+            value={new Intl.NumberFormat("ru-RU").format(dutyTotal)}
           />
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.brokerage}
             label={"Брокерские"}
-            type="number"
-            value={watch("parameters.brokerage")}
+            value={new Intl.NumberFormat("ru-RU").format(brokerage)}
           />
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.customsVat}
             label={"НДС на таможне"}
-            type="number"
-            value={watch("parameters.customsVat")}
+            value={new Intl.NumberFormat("ru-RU").format(customsVat)}
           />
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.totalPurchaseDDP}
             label={"Итого закупка на DDP"}
-            type="number"
-            value={watch("parameters.totalPurchaseDDP")}
+            value={new Intl.NumberFormat("ru-RU").format(totalPurchaseDDP)}
           />
         </div>
         <div className="flex flex-col gap-8 w-[400px] bg-[#e9f5f7] mt-2 p-2">
@@ -539,6 +523,7 @@ export const UsdToRub: React.FC<Props> = ({
             type="number"
             inputProps={{
               min: 0,
+              max: 100,
             }}
             onChange={(event) => {
               setValue(
@@ -552,47 +537,30 @@ export const UsdToRub: React.FC<Props> = ({
             disabled
             defaultValue={order?.parameters?.operationalActivities}
             label={"Операционная деятельность, руб"}
-            type="number"
-            value={watch("parameters.operationalActivities")}
+            value={new Intl.NumberFormat("ru-RU").format(operationalActivities)}
           />
-          <TextField
-            variant="outlined"
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.additionalExpenses}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.additionalExpenses || 0}
+            nameInput="additionalExpenses"
             label={"Дополнительные расходы, РУБ"}
-            type="number"
-            inputProps={{
-              min: 0,
-            }}
-            onChange={(event) => {
-              setValue("parameters.additionalExpenses", +event.target.value);
-            }}
+            setValue={setValue}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.otherUnplannedExpenses}
+          <FormattedInput
+            isAgreed={isAgreed}
+            nameInput="otherUnplannedExpenses"
+            defaultValue={order?.parameters?.otherUnplannedExpenses || 0}
             label={"Прочие незапланированные расходы"}
-            type="number"
-            inputProps={{
-              min: 0,
-            }}
-            onChange={(event) => {
-              setValue(
-                "parameters.otherUnplannedExpenses",
-                +event.target.value
-              );
-            }}
+            setValue={setValue}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.totalOtherExpenses}
-            value={watch("parameters.totalOtherExpenses")}
+            value={new Intl.NumberFormat("ru-RU").format(totalOtherExpenses)}
             label={"Итого прочие расходы"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
         </div>
@@ -619,98 +587,95 @@ export const UsdToRub: React.FC<Props> = ({
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.prepaymentToSupplier}
-            value={watch("parameters.prepaymentToSupplier")}
+            value={new Intl.NumberFormat("ru-RU").format(prepaymentToSupplier)}
             label={"Предоплата поставщику, в валюте"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.prepaymentFromCustomer}
-            value={watch("parameters.prepaymentFromCustomer")}
+            value={new Intl.NumberFormat("ru-RU").format(
+              prepaymentFromCustomer
+            )}
             label={"Предоплата от заказчика, в валюте"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.deltaOnPrepayment}
-            value={watch("parameters.deltaOnPrepayment")}
+            value={new Intl.NumberFormat("ru-RU").format(deltaOnPrepayment)}
             label={"Дельта на предоплату, РУБ"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.deltaPaymentBeforeShipment}
-            value={watch("parameters.deltaPaymentBeforeShipment")}
+            value={new Intl.NumberFormat("ru-RU").format(
+              deltaPaymentBeforeShipment
+            )}
             label={"Дельта на оплату перед отгрузкой, РУБ"}
-            type="number"
           />
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.requiredFundsForCustoms}
-            value={watch("parameters.requiredFundsForCustoms")}
+            value={new Intl.NumberFormat("ru-RU").format(
+              requiredFundsForCustoms
+            )}
             label={"Требуемые средства для таможни"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.requiredFundsPrepayment}
-            value={watch("parameters.requiredFundsPrepayment")}
+            value={new Intl.NumberFormat("ru-RU").format(
+              requiredFundsPrepayment
+            )}
             label={"Требуемые средства на предоплату, РУБ"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.requiredFundsShipment}
-            value={watch("parameters.requiredFundsShipment")}
+            value={new Intl.NumberFormat("ru-RU").format(requiredFundsShipment)}
             label={"Требуемые средства на отгрузку"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.costOfMoneyRub}
-            value={watch("parameters.costOfMoneyRub")}
+            value={new Intl.NumberFormat("ru-RU").format(costOfMoneyRub)}
             label={"Стоимость денег мес"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.costOfMoneyPrepayment}
-            value={watch("parameters.costOfMoneyPrepayment")}
+            value={new Intl.NumberFormat("ru-RU").format(costOfMoneyPrepayment)}
             label={"Стоимость денег на предоплату, РУБ"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.costOfMoneyShipment}
-            value={watch("parameters.costOfMoneyShipment")}
+            value={new Intl.NumberFormat("ru-RU").format(costOfMoneyShipment)}
             label={"Стоимость денег на отгрузку, РУБ"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.totalCostOfMoney}
-            value={watch("parameters.totalCostOfMoney")}
+            value={new Intl.NumberFormat("ru-RU").format(totalCostOfMoney)}
             label={"Итого стоимость денег, РУБ"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
         </div>
@@ -720,27 +685,24 @@ export const UsdToRub: React.FC<Props> = ({
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.companyProfit}
-            value={watch("parameters.companyProfit")}
+            value={new Intl.NumberFormat("ru-RU").format(companyProfit)}
             label={"Прибыль компании, РУБ"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.companyProfitMinusVAT}
-            value={watch("parameters.companyProfitMinusVAT")}
+            value={new Intl.NumberFormat("ru-RU").format(companyProfitMinusVAT)}
             label={"Прибыль компании за вычетом НДС, РУБ"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.companyProfitMinusTAX}
-            value={watch("parameters.companyProfitMinusTAX")}
+            value={new Intl.NumberFormat("ru-RU").format(companyProfitMinusTAX)}
             label={"Прибыль компании за вычетом налога на прибыль, РУБ"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <h2 className="font-bold">Рентабельность проекта, %</h2>
