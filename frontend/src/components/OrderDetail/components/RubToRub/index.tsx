@@ -4,12 +4,19 @@ import { TextField } from "@mui/material";
 import { Order } from "../../../../../shared/types";
 import { useEffect } from "react";
 import { OPERATIONAL_ACTIVITIES } from "../../constants";
-import { gt, negate } from "rambda";
-import clsx from "clsx";
+// import clsx from "clsx";
+import { FormattedInput } from "@/components/FormattedInput";
+import { Button } from "@/components/Button";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { appToast } from "@/components/AppToast/components/lib/appToast";
+import { api } from "../../../../../shared/api/api";
+import Link from "next/link";
+import Image from "next/image";
 
 type Props = {
   errors: FieldErrors<Inputs>;
-  order?: Order;
+  order: Order;
+  token: string;
   setValue: UseFormSetValue<Inputs>;
   watch: UseFormWatch<Inputs>;
   isAgreed: boolean;
@@ -19,57 +26,56 @@ export const RubToRub: React.FC<Props> = ({
   isAgreed,
   errors,
   order,
+  token,
   setValue,
   watch,
 }) => {
+  const queryClient = useQueryClient();
   const salesWithVAT = watch("parameters.salesWithVAT");
   const operationalActivities = watch("parameters.operationalActivities") || 0;
   const additionalExpenses = watch("parameters.additionalExpenses") || 0;
-  const otherUnplannedExpenses =
-    watch("parameters.otherUnplannedExpenses") || 0;
-  const purchase = watch("parameters.purchase") || 0;
-  const prepayment = watch("parameters.prepayment") || 0;
-  const prepaymentSale = watch("parameters.prepaymentSale") || 0;
-  const prepaymentToSupplier = watch("parameters.prepaymentToSupplier") || 0;
-  const prepaymentFromCustomer =
-    watch("parameters.prepaymentFromCustomer") || 0;
-  const deltaOnPrepayment = watch("parameters.deltaOnPrepayment") || 0;
-  const delivery = watch("parameters.delivery") || 0;
-  const requiredFundsPrepayment =
-    watch("parameters.requiredFundsPrepayment") || 0;
-  const costOfMoney = watch("parameters.costOfMoney") || 0;
   const productionTime = watch("parameters.productionTime") || 0;
   const deliveryTimeLogistics = watch("parameters.deliveryTimeLogistics") || 0;
-  const deferralPaymentByCustomer =
-    watch("parameters.deferralPaymentByCustomer") || 0;
-  const requiredFundsShipment = watch("parameters.requiredFundsShipment") || 0;
-  const costOfMoneyPrepayment = watch("parameters.costOfMoneyPrepayment") || 0;
-  const costOfMoneyShipment = watch("parameters.costOfMoneyShipment") || 0;
-  const totalCostOfMoney = watch("parameters.totalCostOfMoney") || 0;
-  const totalOtherExpenses = watch("parameters.totalOtherExpenses") || 0;
-  const companyProfit = watch("parameters.companyProfit") || 0;
-  const companyProfitMinusVAT = watch("parameters.companyProfitMinusVAT") || 0;
-  const companyProfitMinusTAX = watch("parameters.companyProfitMinusTAX") || 0;
-  const projectProfitability = watch("parameters.projectProfitability") || 0;
-  const percentShareInProfit = watch("parameters.percentShareInProfit") || 0;
+  const otherUnplannedExpenses =
+    watch("parameters.otherUnplannedExpenses") || 0;
+
+  const additionalExpensesPercent =
+    watch("parameters.additionalExpensesPercent") || 0;
+
+  const calculateOrderFunc = (input: Order) =>
+    api.calculateOrderRequest(input, token);
+
+  const getQueryKey = (id: number) => ["order"].concat(id.toString());
+
+  const calculateMutation = useMutation({
+    mutationFn: calculateOrderFunc,
+    onSuccess: () => {
+      appToast.success("deleted");
+      queryClient.invalidateQueries({ queryKey: getQueryKey(order?.id || 0) });
+    },
+    onError: () => {
+      appToast.error("error");
+    },
+  });
+
   useEffect(() => {
     setValue(
       "parameters.operationalActivities",
       salesWithVAT * OPERATIONAL_ACTIVITIES
     );
   }, [setValue, salesWithVAT]);
-
-  useEffect(() => {
-    setValue("parameters.prepaymentToSupplier", purchase * prepayment * 0.01);
-  }, [setValue, purchase, prepayment]);
-
   useEffect(() => {
     setValue(
-      "parameters.prepaymentFromCustomer",
-      salesWithVAT * prepaymentSale * 0.01
+      "parameters.additionalExpenses",
+      (salesWithVAT / 1.2) * (additionalExpensesPercent * 0.01)
     );
-  }, [setValue, salesWithVAT, prepaymentSale]);
+  }, [setValue, salesWithVAT, additionalExpensesPercent]);
 
+  useEffect(() => {
+    setValue("parameters.deliveryTime", productionTime + deliveryTimeLogistics);
+  }, [setValue, productionTime, deliveryTimeLogistics]);
+
+  //needs
   useEffect(() => {
     setValue(
       "parameters.totalOtherExpenses",
@@ -82,135 +88,17 @@ export const RubToRub: React.FC<Props> = ({
     otherUnplannedExpenses,
   ]);
 
-  useEffect(() => {
-    setValue(
-      "parameters.deltaOnPrepayment",
-      negate(prepaymentToSupplier - prepaymentFromCustomer)
-    );
-  }, [setValue, prepaymentToSupplier, prepaymentFromCustomer]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.deltaPaymentBeforeShipment",
-      purchase - prepaymentFromCustomer
-    );
-  }, [setValue, purchase, prepaymentFromCustomer]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.requiredFundsPrepayment",
-      gt(deltaOnPrepayment, 0) ? 0 : negate(deltaOnPrepayment)
-    );
-  }, [setValue, deltaOnPrepayment]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.requiredFundsShipment",
-      purchase + delivery - prepaymentFromCustomer
-    );
-  }, [setValue, purchase, delivery, prepaymentFromCustomer]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.costOfMoneyRub",
-      requiredFundsPrepayment * costOfMoney
-    );
-  }, [setValue, requiredFundsPrepayment, costOfMoney]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.costOfMoneyPrepayment",
-      requiredFundsPrepayment *
-        (costOfMoney * 0.01) *
-        (productionTime + deliveryTimeLogistics + deferralPaymentByCustomer)
-    );
-  }, [
-    setValue,
-    requiredFundsPrepayment,
-    costOfMoney,
-    productionTime,
-    deliveryTimeLogistics,
-    deferralPaymentByCustomer,
-  ]);
-
-  useEffect(() => {
-    const result =
-      requiredFundsShipment *
-      (costOfMoney * 0.01) *
-      (deliveryTimeLogistics + deferralPaymentByCustomer);
-    setValue("parameters.costOfMoneyShipment", +result.toFixed());
-  }, [
-    setValue,
-    requiredFundsShipment,
-    costOfMoney,
-    productionTime,
-    deliveryTimeLogistics,
-    deferralPaymentByCustomer,
-  ]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.totalCostOfMoney",
-      costOfMoneyPrepayment + costOfMoneyShipment
-    );
-  }, [setValue, costOfMoneyShipment, costOfMoneyPrepayment]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.companyProfit",
-      salesWithVAT - purchase - delivery - totalCostOfMoney - totalOtherExpenses
-    );
-  }, [
-    setValue,
-    salesWithVAT,
-    purchase,
-    delivery,
-    totalCostOfMoney,
-    totalOtherExpenses,
-  ]);
-  useEffect(() => {
-    setValue("parameters.companyProfitMinusVAT", companyProfit * 0.75);
-  }, [setValue, companyProfit]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.companyProfitMinusTAX",
-      (companyProfitMinusVAT / 5) * 4
-    );
-  }, [setValue, companyProfitMinusVAT]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.projectProfitability",
-      Math.round((companyProfitMinusTAX / salesWithVAT) * 100)
-    );
-  }, [setValue, companyProfitMinusTAX, salesWithVAT]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.percentShareInProfit",
-      Math.round((additionalExpenses / companyProfitMinusTAX) * 100)
-    );
-  }, [setValue, additionalExpenses, companyProfitMinusTAX]);
-
   return (
     <>
       <div className="flex gap-8 mb-6">
         <div className="flex flex-col gap-8 w-[400px]">
           <h2 className="font-bold">Закупка:</h2>
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.purchase}
-            label={"Закупка, РУБ"}
-            type="number"
-            inputProps={{
-              min: 0,
-            }}
-            onChange={(event) => {
-              setValue("parameters.purchase", +event.target.value);
-            }}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.purchase || 0}
+            label={"Закупка, руб"}
+            nameInput="purchase"
+            setValue={setValue}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
@@ -265,31 +153,22 @@ export const RubToRub: React.FC<Props> = ({
         </div>
         <div className="flex flex-col gap-8 px-2 w-[400px] bg-[#ffe3ed]">
           <h2 className="font-bold">Продажа:</h2>
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.salesWithVAT}
-            label={"Продажа с НДС"}
-            inputProps={{
-              min: 0,
-            }}
-            type="number"
-            onChange={(event) => {
-              setValue("parameters.salesWithVAT", +event.target.value);
-            }}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.salesWithVAT || 0}
+            nameInput="salesWithVAT"
+            label={"Продажа с НДС, РУБ"}
+            setValue={setValue}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
-            required
-            disabled={isAgreed}
+            disabled
             defaultValue={order?.parameters?.deliveryTime}
+            value={new Intl.NumberFormat("ru-RU").format(
+              watch("parameters.deliveryTime")
+            )}
             label={"Срок поставки, мес"}
-            type="number"
-            onChange={(event) => {
-              setValue("parameters.deliveryTime", +event.target.value);
-            }}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <h2 className="py-2 font-bold">Условия оплаты:</h2>
@@ -333,20 +212,14 @@ export const RubToRub: React.FC<Props> = ({
       <div className="flex gap-8 mb-6">
         <div className="flex flex-col gap-8 w-[400px] bg-[#e9f5f7] mt-2 p-2">
           <h2 className="py-2 font-bold">Логистика:</h2>
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.delivery}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.delivery || 0}
             label={"Доставка, РУБ"}
-            type="number"
-            inputProps={{
-              min: 0,
-            }}
-            onChange={(event) => {
-              setValue("parameters.delivery", +event.target.value);
-            }}
+            nameInput="delivery"
+            setValue={setValue}
           />
+
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
@@ -388,48 +261,56 @@ export const RubToRub: React.FC<Props> = ({
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.operationalActivities}
-            label={"Операционная деятельность, РУБ"}
-            type="number"
-            value={watch("parameters.operationalActivities")}
+            label={"Операционная деятельность (4%), РУБ"}
+            value={new Intl.NumberFormat("ru-RU").format(
+              watch("parameters.operationalActivities")
+            )}
           />
           <TextField
             variant="outlined"
-            defaultValue={order?.parameters?.additionalExpenses}
-            label={"Дополнительные расходы, РУБ"}
-            type="number"
+            required
+            disabled={isAgreed}
+            defaultValue={order?.parameters?.additionalExpensesPercent}
+            label={"Дополнительные расходы, %"}
             inputProps={{
               min: 0,
+              max: 100,
             }}
-            disabled={isAgreed}
-            onChange={(event) => {
-              setValue("parameters.additionalExpenses", +event.target.value);
-            }}
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.otherUnplannedExpenses}
-            label={"Прочие незапланированные расходы"}
             type="number"
-            inputProps={{
-              min: 0,
-            }}
             onChange={(event) => {
               setValue(
-                "parameters.otherUnplannedExpenses",
+                "parameters.additionalExpensesPercent",
                 +event.target.value
               );
             }}
           />
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.additionalExpenses}
+            label={"Дополнительные расходы, РУБ"}
+            value={new Intl.NumberFormat("ru-RU").format(
+              watch("parameters.additionalExpenses")
+            )}
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.otherUnplannedExpenses || 0}
+            label={"Прочие незапланированные расходы"}
+            nameInput="otherUnplannedExpenses"
+            setValue={setValue}
+          />
+
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
             defaultValue={order?.parameters?.totalOtherExpenses}
-            value={watch("parameters.totalOtherExpenses")}
+            value={new Intl.NumberFormat("ru-RU").format(
+              watch("parameters.totalOtherExpenses")
+            )}
             label={"Итого прочие расходы"}
-            type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
         </div>
@@ -451,99 +332,9 @@ export const RubToRub: React.FC<Props> = ({
               setValue("parameters.costOfMoney", +event.target.value);
             }}
           />
-
-          <TextField
-            variant="outlined"
-            disabled
-            defaultValue={order?.parameters?.prepaymentToSupplier}
-            value={watch("parameters.prepaymentToSupplier")}
-            label={"Предоплата поставщику, РУБ"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            disabled
-            defaultValue={order?.parameters?.prepaymentFromCustomer}
-            value={watch("parameters.prepaymentFromCustomer")}
-            label={"Предоплата от заказчика, РУБ"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            disabled
-            defaultValue={order?.parameters?.deltaOnPrepayment}
-            value={watch("parameters.deltaOnPrepayment")}
-            label={"Дельта на предоплату, РУБ"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            disabled
-            defaultValue={order?.parameters?.deltaPaymentBeforeShipment}
-            value={watch("parameters.deltaPaymentBeforeShipment")}
-            label={"Дельта на оплату перед отгрузкой, РУБ"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            disabled
-            defaultValue={order?.parameters?.requiredFundsPrepayment}
-            value={watch("parameters.requiredFundsPrepayment")}
-            label={"Требуемые средства на предоплату, РУБ"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            disabled
-            defaultValue={order?.parameters?.requiredFundsShipment}
-            value={watch("parameters.requiredFundsShipment")}
-            label={"Требуемые средства на отгрузку, РУБ"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            disabled
-            defaultValue={order?.parameters?.costOfMoneyRub}
-            value={watch("parameters.costOfMoneyRub")}
-            label={"Стоимость денег, РУБ"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            disabled
-            defaultValue={order?.parameters?.costOfMoneyPrepayment}
-            value={watch("parameters.costOfMoneyPrepayment")}
-            label={"Стоимость денег на предоплату, РУБ"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            disabled
-            defaultValue={order?.parameters?.costOfMoneyShipment}
-            value={watch("parameters.costOfMoneyShipment")}
-            label={"Стоимость денег на отгрузку, РУБ"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            disabled
-            defaultValue={order?.parameters?.totalCostOfMoney}
-            value={watch("parameters.totalCostOfMoney")}
-            label={"Итого стоимость денег, РУБ"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
         </div>
-        <div className="flex flex-col gap-8 w-[400px] bg-[#f4faed] mt-2 p-2">
+
+        {/* <div className="flex flex-col gap-8 w-[400px] bg-[#f4faed] mt-2 p-2">
           <h2 className="py-2 font-bold">Расчет прибыли проекта:</h2>
           <TextField
             variant="outlined"
@@ -599,7 +390,33 @@ export const RubToRub: React.FC<Props> = ({
             type="number"
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
-        </div>
+        </div> */}
+      </div>
+      <div className="flex gap-8 mb-6">
+        <Button
+          disabled={true}
+          title={"выполнить расчет"}
+          onButtonClick={() =>
+            calculateMutation.mutate({ ...order, ...watch("parameters") })
+          }
+          type="button"
+        />
+        {order?.filePath && (
+          <div className="flex w-full justify-center">
+            <div className="relative lg:h-[64px] h-[88px] lg:max-w-[64px] bg-gray-purple z-0 rounded-4 max-md:mx-auto w-full">
+              <Link target="blanc" href={order?.filePath || ""}>
+                <Image
+                  src={`/files-images/${"xls"}.svg`}
+                  width={100}
+                  height={100}
+                  alt="изображение"
+                  className="absolute left-0 right-0 top-0 bottom-0 m-auto max-md:w-[56px]"
+                />
+              </Link>
+            </div>
+          </div>
+        )}
+        {/* <Button title={"отклонить"} onButtonClick={() => {}} type="button" /> */}
       </div>
       {/* <TextField
         variant="outlined"

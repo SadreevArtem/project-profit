@@ -50,4 +50,13 @@ export class OrdersController {
   ) {
     return this.ordersService.update(id, updateOrderDto);
   }
+  @UseGuards(JwtGuard)
+  @Patch('calculate/:id')
+  @UseFilters(EntityNotFoundFilter)
+  async calculate(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateOrderDto: UpdateOrderDto,
+  ) {
+    return this.ordersService.calculate(id, updateOrderDto);
+  }
 }

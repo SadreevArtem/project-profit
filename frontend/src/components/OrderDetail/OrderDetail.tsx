@@ -26,7 +26,6 @@ import { useJwtToken } from "../../../shared/hooks/useJwtToken";
 import clsx from "clsx";
 import { RubToRub } from "./components/RubToRub";
 import { UsdToRub } from "./components/UsdToRub";
-import { RubToRubVat } from "./components/RubToRubVat";
 
 type Props = {
   id: number;
@@ -218,12 +217,15 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
   }, [order, setValue]);
 
   const renderContent = () => {
+    if (!order) return null;
+
     switch (typeOrder) {
       case "RUBTORUB":
         return (
           <RubToRub
             isAgreed={isAgreed}
             watch={watch}
+            token={token}
             errors={errors}
             setValue={setValue}
             order={order}
@@ -232,16 +234,6 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
       case "USDTORUB":
         return (
           <UsdToRub
-            isAgreed={isAgreed}
-            watch={watch}
-            errors={errors}
-            setValue={setValue}
-            order={order}
-          />
-        );
-      case "RUBTORUBVAT":
-        return (
-          <RubToRubVat
             isAgreed={isAgreed}
             watch={watch}
             errors={errors}

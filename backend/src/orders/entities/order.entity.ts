@@ -49,6 +49,10 @@ export class Order {
   })
   typeOrder: TypeOrder;
 
+  @Column({ nullable: true })
+  @Length(1, 200)
+  filePath: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

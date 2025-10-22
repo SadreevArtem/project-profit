@@ -37,7 +37,6 @@ export enum OrderStatus {
 
 export enum TypeOrder {
   RUBTORUB = "RUBTORUB",
-  RUBTORUBVAT = "RUBTORUBVAT",
   USDTORUB = "USDTORUB",
 }
 
@@ -64,6 +63,7 @@ export type Parameters = {
   operationalActivitiesPercent: number;
   additionalExpenses: number;
   otherUnplannedExpenses: number;
+  additionalExpensesPercent: number;
   totalOtherExpenses: number;
   costOfMoney: number;
   prepaymentToSupplier: number;
@@ -108,6 +108,7 @@ export type Order = {
   createdAt: Date;
   updatedAt: Date;
   documentationSheet: boolean;
+  filePath?: string;
 };
 
 export type FilesModel = {
