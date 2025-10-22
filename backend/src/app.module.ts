@@ -13,6 +13,8 @@ import * as winston from 'winston';
 import { AuthModule } from './auth/auth.module';
 import { CustomersModule } from './customers/customers.module';
 import { OrdersModule } from './orders/orders.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -22,6 +24,13 @@ import { OrdersModule } from './orders/orders.module';
     }),
     TypeOrmModule.forRootAsync({
       useClass: DatabaseConfigFactory,
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'), // Путь к папке с файлами
+      serveRoot: '/uploads', // Путь в URL
+      serveStaticOptions: {
+        index: false, // Отключает автоматический поиск index.html
+      },
     }),
     WinstonModule.forRoot({
       levels: {
