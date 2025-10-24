@@ -8,8 +8,8 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { User } from 'src/users/entities/user.entity';
 import { UserRole } from 'src/types';
 import { CustomersService } from 'src/customers/customers.service';
-import ExcelJS from 'exceljs';
 import * as path from 'path';
+import { Workbook } from 'exceljs';
 
 @Injectable()
 export class OrdersService {
@@ -61,7 +61,7 @@ export class OrdersService {
     const templatePath = path.join(__dirname, '../templates/template_rub.xlsx');
     const outputDir = path.join(__dirname, '../../uploads');
     const { ...order } = updateOrderDto;
-    const workbook = new ExcelJS.Workbook();
+    const workbook = new Workbook();
 
     // Загружаем шаблон
     await workbook.xlsx.readFile(templatePath);
