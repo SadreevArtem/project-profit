@@ -68,26 +68,36 @@ export class OrdersService {
 
     // Выбираем лист (например, первый)
     const worksheet = workbook.getWorksheet(1);
-    // Force workbook calculation on load
-    workbook.calcProperties.fullCalcOnLoad = true;
 
     // Заполняем данные в ячейки
-    worksheet.getCell('C6').value = order.parameters.purchase; // Закупка
-    worksheet.getCell('C7').value = order.parameters.productionTime; // Срок производства
-    worksheet.getCell('D8').numFmt = `${order.parameters.prepayment}%`; // Предоплата
-    worksheet.getCell('F8').numFmt =
-      `${order.parameters.paymentBeforeShipment}%`; // Перед отгрузкой
+    worksheet.getCell('C6').value = order.parameters.purchase ?? 0; // Закупка
+    worksheet.getCell('C7').value = order.parameters.productionTime ?? ''; // Срок производства
 
-    worksheet.getCell('C12').value = order.parameters.salesWithVAT; // Продажа с НДС
-    worksheet.getCell('D14').numFmt = `${order.parameters.prepaymentSale}%`; // Предоплата
-    worksheet.getCell('F14').numFmt =
-      `${order.parameters.paymentBeforeShipmentSale}%`; // Перед отгрузкой
+    worksheet.getCell('D8').value = (order.parameters.prepayment ?? 0) / 100; // Предоплата (в долях)
+    worksheet.getCell('D8').numFmt = '0%'; // Формат отображения процентов
 
-    worksheet.getCell('C17').value = order.parameters.delivery; // Доставка
-    worksheet.getCell('C18').value = order.parameters.deliveryTimeLogistics; // Срок поставки
-    worksheet.getCell('C19').value = order.parameters.deferralPaymentByCustomer; // Отсрочка оплаты заказчика
+    worksheet.getCell('F8').value =
+      (order.parameters.paymentBeforeShipment ?? 0) / 100; // Перед отгрузкой
+    worksheet.getCell('F8').numFmt = '0%'; // Формат процентов
 
-    worksheet.getCell('C37').value = order.parameters.otherUnplannedExpenses; // Прочие незапланированные расходы
+    worksheet.getCell('C12').value = order.parameters.salesWithVAT ?? 0; // Продажа с НДС
+
+    worksheet.getCell('D14').value =
+      (order.parameters.prepaymentSale ?? 0) / 100; // Предоплата (продажа)
+    worksheet.getCell('D14').numFmt = '0%';
+
+    worksheet.getCell('F14').value =
+      (order.parameters.paymentBeforeShipmentSale ?? 0) / 100; // Перед отгрузкой (продажа)
+    worksheet.getCell('F14').numFmt = '0%';
+
+    worksheet.getCell('C17').value = order.parameters.delivery ?? 0; // Доставка
+    worksheet.getCell('C18').value =
+      order.parameters.deliveryTimeLogistics ?? ''; // Срок поставки
+    worksheet.getCell('C19').value =
+      order.parameters.deferralPaymentByCustomer ?? ''; // Отсрочка оплаты заказчика
+
+    worksheet.getCell('C37').value =
+      order.parameters.otherUnplannedExpenses ?? 0; // Прочие незапланированные расходы
 
     // Формируем имя нового файла
     const outputFileNameXLS = `order_${id}.xlsx`;
@@ -98,11 +108,21 @@ export class OrdersService {
     // Сохраняем заполненный файл
     await workbook.xlsx.writeFile(outputPath);
 
+    // === Перечитываем файл (имитация открытия Excel) ===
+    const reopened = new Workbook();
+    await reopened.xlsx.readFile(outputPath);
+
+    // Можно снова включить пересчёт для надёжности
+    reopened.calcProperties.fullCalcOnLoad = true;
+
+    // "Закрываем" книгу — пересохраняем в том же месте
+    await reopened.xlsx.writeFile(outputPath);
+
     // const { ...rest } = updateOrderDto;
     // Обновляем заказ, передавая только нужные поля из rest
     return this.orderRepository.update(id, {
       // ...rest,
-      filePath: outputFileNameXLS,
+      filePath: `https://api.greenlinerussia.com.ru/uploads/${outputFileNameXLS}`,
     });
   }
   async remove(id: number, user: User) {

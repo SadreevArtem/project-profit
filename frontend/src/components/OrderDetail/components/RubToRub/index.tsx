@@ -50,7 +50,7 @@ export const RubToRub: React.FC<Props> = ({
   const calculateMutation = useMutation({
     mutationFn: calculateOrderFunc,
     onSuccess: () => {
-      appToast.success("deleted");
+      appToast.success("success");
       queryClient.invalidateQueries({ queryKey: getQueryKey(order?.id || 0) });
     },
     onError: () => {
