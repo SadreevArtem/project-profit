@@ -72,12 +72,14 @@ export class OrdersService {
     // Заполняем данные в ячейки
     worksheet.getCell('C6').value = order.parameters.purchase; // Закупка
     worksheet.getCell('C7').value = order.parameters.productionTime; // Срок производства
-    worksheet.getCell('D8').value = order.parameters.prepayment; // Предоплата
-    worksheet.getCell('F8').value = order.parameters.paymentBeforeShipment; // Перед отгрузкой
+    worksheet.getCell('D8').value = `${order.parameters.prepayment}%`; // Предоплата
+    worksheet.getCell('F8').value =
+      `${order.parameters.paymentBeforeShipment}%`; // Перед отгрузкой
 
     worksheet.getCell('C12').value = order.parameters.salesWithVAT; // Продажа с НДС
-    worksheet.getCell('D14').value = order.parameters.prepaymentSale; // Предоплата
-    worksheet.getCell('F14').value = order.parameters.paymentBeforeShipmentSale; // Перед отгрузкой
+    worksheet.getCell('D14').value = `${order.parameters.prepaymentSale}%`; // Предоплата
+    worksheet.getCell('F14').value =
+      `${order.parameters.paymentBeforeShipmentSale}%`; // Перед отгрузкой
 
     worksheet.getCell('C17').value = order.parameters.delivery; // Доставка
     worksheet.getCell('C18').value = order.parameters.deliveryTimeLogistics; // Срок поставки
