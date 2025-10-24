@@ -93,6 +93,8 @@ export class OrdersService {
     const outputFileNameXLS = `order_${id}.xlsx`;
     const outputPath = path.join(outputDir, outputFileNameXLS);
 
+    workbook.calcProperties.fullCalcOnLoad = true;
+
     // Сохраняем заполненный файл
     await workbook.xlsx.writeFile(outputPath);
 
