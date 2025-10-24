@@ -8,8 +8,8 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { User } from 'src/users/entities/user.entity';
 import { UserRole } from 'src/types';
 import { CustomersService } from 'src/customers/customers.service';
+import ExcelJS from 'exceljs';
 import * as path from 'path';
-import { Workbook } from 'exceljs';
 
 @Injectable()
 export class OrdersService {
@@ -61,24 +61,26 @@ export class OrdersService {
     const templatePath = path.join(__dirname, '../templates/template_rub.xlsx');
     const outputDir = path.join(__dirname, '../../uploads');
     const { ...order } = updateOrderDto;
-    const workbook = new Workbook();
+    const workbook = new ExcelJS.Workbook();
 
     // Загружаем шаблон
     await workbook.xlsx.readFile(templatePath);
 
     // Выбираем лист (например, первый)
     const worksheet = workbook.getWorksheet(1);
+    // Force workbook calculation on load
+    workbook.calcProperties.fullCalcOnLoad = true;
 
     // Заполняем данные в ячейки
     worksheet.getCell('C6').value = order.parameters.purchase; // Закупка
     worksheet.getCell('C7').value = order.parameters.productionTime; // Срок производства
-    worksheet.getCell('D8').value = `${order.parameters.prepayment}%`; // Предоплата
-    worksheet.getCell('F8').value =
+    worksheet.getCell('D8').numFmt = `${order.parameters.prepayment}%`; // Предоплата
+    worksheet.getCell('F8').numFmt =
       `${order.parameters.paymentBeforeShipment}%`; // Перед отгрузкой
 
     worksheet.getCell('C12').value = order.parameters.salesWithVAT; // Продажа с НДС
-    worksheet.getCell('D14').value = `${order.parameters.prepaymentSale}%`; // Предоплата
-    worksheet.getCell('F14').value =
+    worksheet.getCell('D14').numFmt = `${order.parameters.prepaymentSale}%`; // Предоплата
+    worksheet.getCell('F14').numFmt =
       `${order.parameters.paymentBeforeShipmentSale}%`; // Перед отгрузкой
 
     worksheet.getCell('C17').value = order.parameters.delivery; // Доставка
