@@ -33,4 +33,6 @@ export type Parameters = {
   additionalExpenses: number;
   otherUnplannedExpenses: number;
   totalOtherExpenses: number;
+  costOfMoney: number;
+  additionalExpensesPercent: number;
 };

@@ -96,6 +96,13 @@ export class OrdersService {
     worksheet.getCell('C19').value =
       order.parameters.deferralPaymentByCustomer ?? ''; // Отсрочка оплаты заказчика
 
+    worksheet.getCell('C22').value = (order.parameters.costOfMoney ?? 0) / 100; // Инвестиции
+    worksheet.getCell('C22').numFmt = '0%';
+
+    worksheet.getCell('D36').value =
+      (order.parameters.additionalExpensesPercent ?? 0) / 100; // Предоплата (продажа)
+    worksheet.getCell('D36').numFmt = '0%';
+
     worksheet.getCell('C37').value =
       order.parameters.otherUnplannedExpenses ?? 0; // Прочие незапланированные расходы
 
