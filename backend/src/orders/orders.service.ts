@@ -125,11 +125,11 @@ export class OrdersService {
     // Выбираем лист (например, первый)
     const worksheetRead = reopened.getWorksheet(1);
 
-    const companyProfit = +worksheetRead.getCell('С41').value;
-    const companyProfitMinusVAT = +worksheetRead.getCell('С42').value;
-    const companyProfitMinusTAX = +worksheetRead.getCell('С44').value;
-    const projectProfitability = +worksheetRead.getCell('С46').value;
-    const percentShareInProfit = +worksheetRead.getCell('С48').value;
+    const companyProfit = +worksheetRead.getCell('С41').value; // Прибыль компании
+    const companyProfitMinusVAT = +worksheetRead.getCell('С42').value; // Прибыль компании за вычетом НДС
+    const companyProfitMinusTAX = +worksheetRead.getCell('С44').value; // Прибыль компании за вычетом налога на прибыль
+    const projectProfitability = +worksheetRead.getCell('С46').value; // Рентабельность проекта
+    const percentShareInProfit = +worksheetRead.getCell('С48').value; // % доли *** в прибыли
     // "Закрываем" книгу — пересохраняем в том же месте
     await reopened.xlsx.writeFile(outputPath);
 
