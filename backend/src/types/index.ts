@@ -35,4 +35,9 @@ export type Parameters = {
   totalOtherExpenses: number;
   costOfMoney: number;
   additionalExpensesPercent: number;
+  companyProfit: number; // Прибыль компании
+  companyProfitMinusVAT: number; // Прибыль компании за вычетом НДС
+  companyProfitMinusTAX: number; // Прибыль компании за вычетом налога на прибыль
+  projectProfitability: number; // Рентабельность проекта
+  percentShareInProfit: number; // % доли *** в прибыли
 };

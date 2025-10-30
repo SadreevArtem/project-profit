@@ -100,7 +100,7 @@ export class OrdersService {
     worksheet.getCell('C22').numFmt = '0%';
 
     worksheet.getCell('D36').value =
-      (order.parameters.additionalExpensesPercent ?? 0) / 100; // Предоплата (продажа)
+      (order.parameters.additionalExpensesPercent ?? 0) / 100; // ***
     worksheet.getCell('D36').numFmt = '0%';
 
     worksheet.getCell('C37').value =
@@ -122,6 +122,14 @@ export class OrdersService {
     // Можно снова включить пересчёт для надёжности
     reopened.calcProperties.fullCalcOnLoad = true;
 
+    // Выбираем лист (например, первый)
+    const worksheetRead = reopened.getWorksheet(1);
+
+    const companyProfit = +worksheetRead.getCell('С41').value;
+    const companyProfitMinusVAT = +worksheetRead.getCell('С42').value;
+    const companyProfitMinusTAX = +worksheetRead.getCell('С44').value;
+    const projectProfitability = +worksheetRead.getCell('С46').value;
+    const percentShareInProfit = +worksheetRead.getCell('С48').value;
     // "Закрываем" книгу — пересохраняем в том же месте
     await reopened.xlsx.writeFile(outputPath);
 
@@ -129,6 +137,13 @@ export class OrdersService {
     // Обновляем заказ, передавая только нужные поля из rest
     return this.orderRepository.update(id, {
       // ...rest,
+      parameters: {
+        companyProfit,
+        companyProfitMinusVAT,
+        companyProfitMinusTAX,
+        projectProfitability,
+        percentShareInProfit,
+      },
       filePath: `https://api.greenlinerussia.com.ru/uploads/${outputFileNameXLS}`,
     });
   }
