@@ -12,7 +12,7 @@ import * as path from 'path';
 import * as XLSX from 'xlsx';
 import * as XLSX_CALC from 'xlsx-calc';
 import { Workbook } from 'exceljs';
-import { getNumericValue } from 'src/helpers/func';
+// import { getNumericValue } from 'src/helpers/func';
 
 @Injectable()
 export class OrdersService {
@@ -116,23 +116,34 @@ export class OrdersService {
     // Сохраняем заполненный файл
     await workbook.xlsx.writeFile(outputPath);
 
-    // === Пересчитываем формулы через xlsx + xlsx-calc ===
-    const wb = XLSX.readFile(outputPath);
-    XLSX_CALC(wb); // выполняем пересчёт всех формул
-    XLSX.writeFile(wb, outputPath); // сохраняем обратно
+    const buffer = await workbook.xlsx.writeBuffer(); // сохраняем в буфер, не в файл
+    const wb = XLSX.read(buffer, { type: 'buffer' });
+    XLSX_CALC(wb);
 
-    // === Перечитываем файл (имитация открытия Excel) ===
-    const reopened = new Workbook();
-    await reopened.xlsx.readFile(outputPath);
+    // // === Пересчитываем формулы через xlsx + xlsx-calc ===
+    // const wb = XLSX.readFile(outputPath);
+    // XLSX_CALC(wb); // выполняем пересчёт всех формул
+    // XLSX.writeFile(wb, outputPath); // сохраняем обратно
 
-    // Можно снова включить пересчёт для надёжности
-    reopened.calcProperties.fullCalcOnLoad = true;
+    // // === Перечитываем файл (имитация открытия Excel) ===
+    // const reopened = new Workbook();
+    // await reopened.xlsx.readFile(outputPath);
 
-    // Выбираем лист (например, первый)
-    const worksheetRead = reopened.getWorksheet(1);
+    // // Можно снова включить пересчёт для надёжности
+    // reopened.calcProperties.fullCalcOnLoad = true;
 
-    const getCellResultFunc = (cell) => {
-      return getNumericValue(cell, worksheetRead);
+    // // Выбираем лист (например, первый)
+    // const worksheetRead = reopened.getWorksheet(1);
+
+    // const getCellResultFunc = (cell) => {
+    //   return getNumericValue(cell, worksheetRead);
+    // };
+
+    // === 3. Считываем актуальные значения без изменения оригинального файла ===
+    const getCellResultFunc = (addr: string) => {
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const cell = sheet[addr];
+      return typeof cell?.v === 'number' ? cell.v : Number(cell?.v || 0);
     };
 
     const companyProfit = getCellResultFunc('C41'); // Прибыль компании
@@ -140,8 +151,6 @@ export class OrdersService {
     const companyProfitMinusTAX = getCellResultFunc('C44'); // Прибыль компании за вычетом налога на прибыль
     const projectProfitability = getCellResultFunc('C46'); // Рентабельность проекта
     const percentShareInProfit = getCellResultFunc('C48'); // % доли *** в прибыли
-    // "Закрываем" книгу — пересохраняем в том же месте
-    await reopened.xlsx.writeFile(outputPath);
 
     // const { ...rest } = updateOrderDto;
     // Обновляем заказ, передавая только нужные поля из rest
