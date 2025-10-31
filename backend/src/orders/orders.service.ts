@@ -10,6 +10,7 @@ import { UserRole } from 'src/types';
 import { CustomersService } from 'src/customers/customers.service';
 import * as path from 'path';
 import { Workbook } from 'exceljs';
+import { getNumericValue } from 'src/helpers/func';
 
 @Injectable()
 export class OrdersService {
@@ -125,11 +126,15 @@ export class OrdersService {
     // Выбираем лист (например, первый)
     const worksheetRead = reopened.getWorksheet(1);
 
-    const companyProfit = +worksheetRead.getCell('С41').value; // Прибыль компании
-    const companyProfitMinusVAT = +worksheetRead.getCell('С42').value; // Прибыль компании за вычетом НДС
-    const companyProfitMinusTAX = +worksheetRead.getCell('С44').value; // Прибыль компании за вычетом налога на прибыль
-    const projectProfitability = +worksheetRead.getCell('С46').value; // Рентабельность проекта
-    const percentShareInProfit = +worksheetRead.getCell('С48').value; // % доли *** в прибыли
+    const getCellResultFunc = (cell) => {
+      return getNumericValue(cell, worksheetRead);
+    };
+
+    const companyProfit = getCellResultFunc('C41'); // Прибыль компании
+    const companyProfitMinusVAT = getCellResultFunc('C42'); // Прибыль компании за вычетом НДС
+    const companyProfitMinusTAX = getCellResultFunc('C44'); // Прибыль компании за вычетом налога на прибыль
+    const projectProfitability = getCellResultFunc('C46'); // Рентабельность проекта
+    const percentShareInProfit = getCellResultFunc('C48'); // % доли *** в прибыли
     // "Закрываем" книгу — пересохраняем в том же месте
     await reopened.xlsx.writeFile(outputPath);
 
