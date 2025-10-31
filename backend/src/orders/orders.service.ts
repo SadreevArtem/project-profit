@@ -9,6 +9,7 @@ import { User } from 'src/users/entities/user.entity';
 import { UserRole } from 'src/types';
 import { CustomersService } from 'src/customers/customers.service';
 import * as path from 'path';
+import * as XlsxPopulate from 'xlsx-calc';
 import { Workbook } from 'exceljs';
 import { getNumericValue } from 'src/helpers/func';
 
@@ -113,6 +114,11 @@ export class OrdersService {
     const outputPath = path.join(outputDir, outputFileNameXLS);
 
     workbook.calcProperties.fullCalcOnLoad = true;
+
+    // === Пересчитываем формулы на сервере ===
+    const buffer = await workbook.xlsx.writeBuffer(); // получаем буфер Excel
+    const wbCalc = XlsxPopulate.read(buffer, { type: 'buffer' });
+    XlsxPopulate.calc(wbCalc); // выполняем пересчёт формул
 
     // Сохраняем заполненный файл
     await workbook.xlsx.writeFile(outputPath);
