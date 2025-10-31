@@ -148,8 +148,8 @@ export class OrdersService {
         companyProfit,
         companyProfitMinusVAT,
         companyProfitMinusTAX,
-        projectProfitability,
-        percentShareInProfit,
+        projectProfitability: projectProfitability * 100,
+        percentShareInProfit: percentShareInProfit * 100,
       },
       filePath: `https://api.greenlinerussia.com.ru/uploads/${outputFileNameXLS}`,
     });
