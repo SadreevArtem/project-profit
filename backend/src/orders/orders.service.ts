@@ -59,6 +59,7 @@ export class OrdersService {
     return this.orderRepository.save(order);
   }
   async calculate(id: number, updateOrderDto: UpdateOrderDto) {
+    const existingOrder = await this.orderRepository.findOne({ where: { id } });
     const templatePath = path.join(__dirname, '../templates/template_rub.xlsx');
     const outputDir = path.join(__dirname, '../../uploads');
     const { ...order } = updateOrderDto;
@@ -143,6 +144,7 @@ export class OrdersService {
     return this.orderRepository.update(id, {
       // ...rest,
       parameters: {
+        ...(existingOrder.parameters || {}), // сохраняем старые значения
         companyProfit,
         companyProfitMinusVAT,
         companyProfitMinusTAX,
