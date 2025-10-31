@@ -155,7 +155,7 @@ export class OrdersService {
     // const { ...rest } = updateOrderDto;
     // Обновляем заказ, передавая только нужные поля из rest
     return this.orderRepository.update(id, {
-      // ...rest,
+      ...order,
       parameters: {
         ...(existingOrder.parameters || {}), // сохраняем старые значения
         companyProfit,
