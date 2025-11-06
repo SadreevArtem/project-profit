@@ -17,6 +17,7 @@ import { appToast } from "@/components/AppToast/components/lib/appToast";
 import { api } from "../../../../../shared/api/api";
 import Link from "next/link";
 import Image from "next/image";
+import clsx from "clsx";
 
 type Props = {
   errors: FieldErrors<Inputs>;
@@ -439,6 +440,68 @@ export const RubToRub: React.FC<Props> = ({
         )}
         {/* <Button title={"отклонить"} onButtonClick={() => {}} type="button" /> */}
       </div>
+      {order?.parameters?.companyProfit && (
+        <div className="flex flex-col gap-8 w-[400px] bg-[#f4faed] mt-2 p-2">
+          <h2 className="py-2 font-bold">Расчет прибыли проекта:</h2>
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.companyProfit}
+            value={new Intl.NumberFormat("ru-RU").format(
+              order?.parameters?.companyProfit
+            )}
+            label={"Прибыль компании, РУБ"}
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.companyProfitMinusVAT}
+            value={new Intl.NumberFormat("ru-RU").format(
+              order?.parameters?.companyProfitMinusVAT
+            )}
+            label={"Прибыль компании за вычетом НДС, РУБ"}
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <TextField
+            variant="outlined"
+            disabled
+            defaultValue={order?.parameters?.companyProfitMinusTAX}
+            value={new Intl.NumberFormat("ru-RU").format(
+              order?.parameters?.companyProfitMinusTAX
+            )}
+            label={"Прибыль компании за вычетом налога на прибыль, РУБ"}
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <h2 className="font-bold">Рентабельность проекта, %</h2>
+          <TextField
+            variant="outlined"
+            disabled
+            className={clsx({
+              "bg-rose-300": order?.parameters?.projectProfitability < 20,
+              "bg-green-500": order?.parameters?.projectProfitability > 20,
+            })}
+            defaultValue={order?.parameters?.projectProfitability}
+            value={Math.round(order?.parameters?.projectProfitability)}
+            // label={"Рентабельность проекта, %"}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+          <h2 className="font-bold">% доли *** в прибыли, %</h2>
+          <TextField
+            variant="outlined"
+            disabled
+            className={clsx({
+              "bg-rose-300": order?.parameters?.percentShareInProfit < 25,
+              "bg-green-500": order?.parameters?.percentShareInProfit > 25,
+            })}
+            defaultValue={order?.parameters?.percentShareInProfit}
+            value={Math.round(order?.parameters?.percentShareInProfit)}
+            type="number"
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+        </div>
+      )}
       {/* <TextField
         variant="outlined"
         label={t("purchase")}
