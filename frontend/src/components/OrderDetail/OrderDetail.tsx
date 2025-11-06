@@ -81,6 +81,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
     register,
     handleSubmit,
     setValue,
+    getValues,
     watch,
     formState: { errors },
   } = useForm<Inputs>({
@@ -226,6 +227,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
             isAgreed={isAgreed}
             watch={watch}
             token={token}
+            getValues={getValues}
             errors={errors}
             setValue={setValue}
             order={order}

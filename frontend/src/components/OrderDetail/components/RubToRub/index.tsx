@@ -1,6 +1,11 @@
-import { FieldErrors, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import {
+  FieldErrors,
+  UseFormGetValues,
+  UseFormSetValue,
+  UseFormWatch,
+} from "react-hook-form";
 import { Inputs } from "../../OrderDetail";
-import { TextField } from "@mui/material";
+import { CircularProgress, TextField } from "@mui/material";
 import { Order } from "../../../../../shared/types";
 import { useEffect } from "react";
 import { OPERATIONAL_ACTIVITIES } from "../../constants";
@@ -17,6 +22,7 @@ type Props = {
   errors: FieldErrors<Inputs>;
   order: Order;
   token: string;
+  getValues: UseFormGetValues<Inputs>;
   setValue: UseFormSetValue<Inputs>;
   watch: UseFormWatch<Inputs>;
   isAgreed: boolean;
@@ -26,6 +32,7 @@ export const RubToRub: React.FC<Props> = ({
   isAgreed,
   errors,
   order,
+  getValues,
   token,
   setValue,
   watch,
@@ -42,12 +49,19 @@ export const RubToRub: React.FC<Props> = ({
   const additionalExpensesPercent =
     watch("parameters.additionalExpensesPercent") || 0;
 
+  const keysToRemove = ["owner", "customer", "customerId", "ownerId"];
+  const currentValues = getValues();
+
+  const filteredValues: Partial<Order> = Object.fromEntries(
+    Object.entries(currentValues).filter(([key]) => !keysToRemove.includes(key))
+  );
+
   const calculateOrderFunc = (input: Order) =>
     api.calculateOrderRequest(input, token);
 
   const getQueryKey = (id: number) => ["order"].concat(id.toString());
 
-  const calculateMutation = useMutation({
+  const { mutate: calculateMutation, isPending } = useMutation({
     mutationFn: calculateOrderFunc,
     onSuccess: () => {
       appToast.success("success");
@@ -393,14 +407,21 @@ export const RubToRub: React.FC<Props> = ({
         </div> */}
       </div>
       <div className="flex gap-8 mb-6">
-        <Button
-          disabled={true}
-          title={"выполнить расчет"}
-          onButtonClick={() =>
-            calculateMutation.mutate({ ...order, ...watch("parameters") })
-          }
-          type="button"
-        />
+        {isPending ? (
+          <CircularProgress />
+        ) : (
+          <Button
+            disabled={true}
+            title={"выполнить расчет"}
+            onButtonClick={() =>
+              calculateMutation({
+                ...(filteredValues as Order),
+              })
+            }
+            type="button"
+          />
+        )}
+
         {order?.filePath && (
           <div className="flex w-full justify-center">
             <div className="relative lg:h-[64px] h-[88px] lg:max-w-[64px] bg-gray-purple z-0 rounded-4 max-md:mx-auto w-full">
