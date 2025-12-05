@@ -26,7 +26,6 @@ import { useJwtToken } from "../../../shared/hooks/useJwtToken";
 import clsx from "clsx";
 import { RubToRub } from "./components/RubToRub";
 import { UsdToRub } from "./components/UsdToRub";
-// import { UsdToRub } from "./components/UsdToRub";
 
 type Props = {
   id: number;

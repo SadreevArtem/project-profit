@@ -40,6 +40,13 @@ export enum TypeOrder {
   USDTORUB = "USDTORUB",
 }
 
+export enum Currency {
+  USD = "USD",
+  EUR = "EUR",
+  GBP = "GBP",
+  CNY = "CNY",
+}
+
 export type Customer = {
   id: number;
   name: string;
@@ -86,7 +93,9 @@ export type Parameters = {
   salesVat: number;
   salesWithoutVat: number;
   purchaseCurrencyRate: number;
-  bankSellingRate: number;
+  bankCurrencySalesRatio: number;
+  agentServices: number; // услуги агента
+  markup: number; // наценка
   currentCourseRate: number;
   dutyPercent: number;
   dutyTotal: number;
@@ -94,6 +103,7 @@ export type Parameters = {
   customsVat: number;
   totalPurchaseDDP: number;
   requiredFundsForCustoms: number;
+  currency: string; //валюта закупки
 };
 
 export type Order = {

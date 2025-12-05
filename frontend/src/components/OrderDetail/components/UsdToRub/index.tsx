@@ -1,9 +1,15 @@
 import { FieldErrors, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { Inputs } from "../../OrderDetail";
-import { TextField } from "@mui/material";
-import { Order } from "../../../../../shared/types";
-import { useEffect } from "react";
-import { gt, negate } from "rambda";
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  TextField,
+} from "@mui/material";
+import { Currency, Order } from "../../../../../shared/types";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { FormattedInput } from "@/components/FormattedInput";
 
@@ -22,26 +28,26 @@ export const UsdToRub: React.FC<Props> = ({
   setValue,
   watch,
 }) => {
-  const salesWithVAT = watch("parameters.salesWithVAT");
+  const [cbrRates, setCbrRates] = useState<{
+    USD?: number;
+    EUR?: number;
+    GBP?: number;
+    CNY?: number;
+  } | null>(null);
+  const [cbrDate, setCbrDate] = useState<string | null>(null);
+
+  const [isRatesError, setIsRatesError] = useState(false);
+  const [currency, setCurrency] = useState<string>(
+    order?.parameters?.currency || Currency.USD
+  );
+
   const operationalActivities = watch("parameters.operationalActivities") || 0;
-  const additionalExpenses = watch("parameters.additionalExpenses") || 0;
-  const otherUnplannedExpenses =
-    watch("parameters.otherUnplannedExpenses") || 0;
-  const purchase = watch("parameters.purchase") || 0;
-  const prepayment = watch("parameters.prepayment") || 0;
-  const prepaymentSale = watch("parameters.prepaymentSale") || 0;
   const prepaymentToSupplier = watch("parameters.prepaymentToSupplier") || 0;
   const prepaymentFromCustomer =
     watch("parameters.prepaymentFromCustomer") || 0;
   const deltaOnPrepayment = watch("parameters.deltaOnPrepayment") || 0;
-  const delivery = watch("parameters.delivery") || 0;
   const requiredFundsPrepayment =
     watch("parameters.requiredFundsPrepayment") || 0;
-  const costOfMoney = watch("parameters.costOfMoney") || 0;
-  const productionTime = watch("parameters.productionTime") || 0;
-  const deliveryTimeLogistics = watch("parameters.deliveryTimeLogistics") || 0;
-  const deferralPaymentByCustomer =
-    watch("parameters.deferralPaymentByCustomer") || 0;
   const requiredFundsShipment = watch("parameters.requiredFundsShipment") || 0;
   const costOfMoneyPrepayment = watch("parameters.costOfMoneyPrepayment") || 0;
   const costOfMoneyShipment = watch("parameters.costOfMoneyShipment") || 0;
@@ -53,259 +59,141 @@ export const UsdToRub: React.FC<Props> = ({
   const projectProfitability = watch("parameters.projectProfitability") || 0;
   const percentShareInProfit = watch("parameters.percentShareInProfit") || 0;
   const dutyTotal = watch("parameters.dutyTotal") || 0;
-  const purchaseCurrencyRate = watch("parameters.purchaseCurrencyRate") || 0;
-  const bankSellingRate = watch("parameters.bankSellingRate") || 0;
-  const dutyPercent = watch("parameters.dutyPercent") || 0;
   const brokerage = watch("parameters.brokerage") || 0;
   const customsVat = watch("parameters.customsVat") || 0;
-  const currentCourseRate = watch("parameters.currentCourseRate") || 0;
   const totalPurchaseDDP = watch("parameters.totalPurchaseDDP") || 0;
   const deltaPaymentBeforeShipment =
     watch("parameters.deltaPaymentBeforeShipment") || 0;
   const requiredFundsForCustoms =
     watch("parameters.requiredFundsForCustoms") || 0;
-  const operationalActivitiesPercent =
-    watch("parameters.operationalActivitiesPercent") || 0;
+
   const costOfMoneyRub = watch("parameters.costOfMoneyRub") || 0;
-  useEffect(() => {
-    setValue(
-      "parameters.operationalActivities",
-      salesWithVAT * operationalActivitiesPercent * 0.01
-    );
-  }, [setValue, salesWithVAT, operationalActivitiesPercent]);
+
+  const handleChangeCurrency = (event: SelectChangeEvent) => {
+    setCurrency(event.target.value as Currency);
+    setValue("parameters.currency", event.target.value as Currency);
+  };
 
   useEffect(() => {
-    setValue("parameters.prepaymentToSupplier", purchase * prepayment * 0.01);
-  }, [setValue, purchase, prepayment]);
+    const controller = new AbortController();
+
+    fetch("https://www.cbr-xml-daily.ru/daily_json.js", {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        setCbrDate(data?.Date || null);
+        setCbrRates({
+          USD: data?.Valute?.USD?.Value,
+          EUR: data?.Valute?.EUR?.Value,
+          GBP: data?.Valute?.GBP?.Value,
+          CNY: data?.Valute?.CNY?.Value,
+        });
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          setIsRatesError(true);
+        }
+      });
+
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
-    setValue(
-      "parameters.prepaymentFromCustomer",
-      Math.round((salesWithVAT * prepaymentSale * 0.01) / currentCourseRate)
-    );
-  }, [setValue, salesWithVAT, prepaymentSale, currentCourseRate]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.totalOtherExpenses",
-      operationalActivities + additionalExpenses + otherUnplannedExpenses
-    );
-  }, [
-    setValue,
-    operationalActivities,
-    additionalExpenses,
-    otherUnplannedExpenses,
-  ]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.deltaOnPrepayment",
-      negate(prepaymentToSupplier - prepaymentFromCustomer)
-    );
-  }, [setValue, prepaymentToSupplier, prepaymentFromCustomer]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.deltaPaymentBeforeShipment",
-      purchase - prepaymentFromCustomer
-    );
-  }, [setValue, purchase, prepaymentFromCustomer]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.requiredFundsPrepayment",
-      gt(deltaOnPrepayment, 0) ? 0 : negate(deltaOnPrepayment)
-    );
-  }, [setValue, deltaOnPrepayment]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.requiredFundsShipment",
-      totalPurchaseDDP - prepaymentFromCustomer
-    );
-  }, [setValue, totalPurchaseDDP, prepaymentFromCustomer]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.costOfMoneyRub",
-      (deltaPaymentBeforeShipment + requiredFundsForCustoms) *
-        costOfMoney *
-        0.01
-    );
-  }, [
-    setValue,
-    deltaPaymentBeforeShipment,
-    costOfMoney,
-    requiredFundsForCustoms,
-  ]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.costOfMoneyPrepayment",
-      requiredFundsPrepayment *
-        (costOfMoney * 0.01) *
-        (productionTime + deliveryTimeLogistics + deferralPaymentByCustomer)
-    );
-  }, [
-    setValue,
-    requiredFundsPrepayment,
-    costOfMoney,
-    productionTime,
-    deliveryTimeLogistics,
-    deferralPaymentByCustomer,
-  ]);
-
-  useEffect(() => {
-    const result =
-      requiredFundsShipment *
-      (costOfMoney * 0.01) *
-      (deliveryTimeLogistics + deferralPaymentByCustomer);
-    setValue("parameters.costOfMoneyShipment", +result.toFixed());
-  }, [
-    setValue,
-    requiredFundsShipment,
-    costOfMoney,
-    productionTime,
-    deliveryTimeLogistics,
-    deferralPaymentByCustomer,
-  ]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.totalCostOfMoney",
-      costOfMoneyPrepayment + costOfMoneyShipment
-    );
-  }, [setValue, costOfMoneyShipment, costOfMoneyPrepayment]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.companyProfit",
-      Math.round(
-        salesWithVAT -
-          totalPurchaseDDP * currentCourseRate -
-          totalCostOfMoney * currentCourseRate -
-          totalOtherExpenses
-      )
-    );
-  }, [
-    setValue,
-    salesWithVAT,
-    totalPurchaseDDP,
-    currentCourseRate,
-    totalCostOfMoney,
-    totalOtherExpenses,
-  ]);
-  useEffect(() => {
-    setValue(
-      "parameters.companyProfitMinusVAT",
-      companyProfit - companyProfit * 0.2
-    );
-  }, [setValue, companyProfit]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.companyProfitMinusTAX",
-      companyProfitMinusVAT - companyProfitMinusVAT * 0.25
-    );
-  }, [setValue, companyProfitMinusVAT]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.projectProfitability",
-      Math.round((companyProfitMinusTAX / salesWithVAT) * 100)
-    );
-  }, [setValue, companyProfitMinusTAX, salesWithVAT]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.percentShareInProfit",
-      Math.round((additionalExpenses / companyProfitMinusTAX) * 100)
-    );
-  }, [setValue, additionalExpenses, companyProfitMinusTAX]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.brokerage",
-      Math.round((purchase + delivery + dutyTotal) * 0.02)
-    );
-  }, [setValue, purchase, delivery, dutyTotal]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.currentCourseRate",
-      parseFloat(
-        (
-          purchaseCurrencyRate +
-          purchaseCurrencyRate * bankSellingRate * 0.01
-        ).toFixed(2)
-      )
-    );
-  }, [setValue, purchaseCurrencyRate, bankSellingRate]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.dutyTotal",
-      Math.round((purchase + delivery) * dutyPercent * 0.01)
-    );
-  }, [setValue, purchase, delivery, dutyPercent]);
-  useEffect(() => {
-    setValue(
-      "parameters.customsVat",
-      Math.round((purchase + delivery + brokerage + dutyTotal) * 0.2)
-    );
-  }, [setValue, purchase, delivery, brokerage, dutyTotal]);
-
-  useEffect(() => {
-    setValue(
-      "parameters.totalPurchaseDDP",
-      purchase + brokerage + dutyTotal + customsVat + delivery
-    );
-  }, [setValue, purchase, brokerage, dutyTotal, delivery, customsVat]);
-
-  useEffect(() => {
-    setValue("parameters.requiredFundsForCustoms", totalPurchaseDDP - purchase);
-  }, [setValue, purchase, totalPurchaseDDP]);
+    if (cbrRates) {
+      setValue(
+        "parameters.purchaseCurrencyRate",
+        cbrRates[currency as Currency] || 0
+      );
+    }
+  }, [setValue, cbrRates, currency]);
 
   return (
     <>
+      <div className="mb-6">
+        <h2 className="font-bold mb-2">Курс валют ЦБ РФ</h2>
+        <div className="text-sm text-gray-600">
+          {cbrDate
+            ? `Обновлено: ${new Date(cbrDate).toLocaleDateString("ru-RU")}`
+            : "Загрузка..."}
+        </div>
+        <div className="mt-2 overflow-x-auto">
+          <table className="min-w-[360px] border-collapse border border-gray-200 text-sm">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-gray-200 px-3 py-2 text-left">
+                  Валюта
+                </th>
+                <th className="border border-gray-200 px-3 py-2 text-left">
+                  Курс, ₽
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {["USD", "EUR", "GBP", "CNY"].map((code) => (
+                <tr key={code}>
+                  <td className="border border-gray-200 px-3 py-2">{code}</td>
+                  <td className="border border-gray-200 px-3 py-2">
+                    {cbrRates && cbrRates[code as keyof typeof cbrRates]
+                      ? cbrRates[code as keyof typeof cbrRates]?.toLocaleString(
+                          "ru-RU",
+                          { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                        )
+                      : isRatesError
+                      ? "Ошибка загрузки"
+                      : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
       <div className="flex gap-8 mb-6">
         <div className="flex flex-col gap-8 w-[400px]">
           <h2 className="font-bold">Закупка:</h2>
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.purchaseCurrencyRate}
-            label={"Курс валюты закупки"}
-            type="number"
-            inputProps={{
-              min: 0,
-            }}
-            onChange={(event) => {
-              setValue("parameters.purchaseCurrencyRate", +event.target.value);
-            }}
-          />
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.bankSellingRate}
-            label={"Курс продажи банком, %"}
-            type="number"
-            inputProps={{
-              min: 0,
-            }}
-            onChange={(event) => {
-              setValue("parameters.bankSellingRate", +event.target.value);
-            }}
-          />
+          <FormControl className={clsx()}>
+            <InputLabel id="demo-simple-select-label">
+              {"Валюта закупки"}
+            </InputLabel>
+            <Select
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              value={currency}
+              defaultValue={order?.parameters?.currency}
+              label={"Валюта закупки"}
+              onChange={handleChangeCurrency}
+            >
+              {Object.values(Currency).map((item, i) => (
+                <MenuItem key={i} value={item}>
+                  {item}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <TextField
             variant="outlined"
             disabled
-            defaultValue={order?.parameters?.currentCourseRate}
-            label={"Расчетный курс, Руб"}
-            type="number"
-            value={currentCourseRate}
+            defaultValue={order?.parameters?.purchaseCurrencyRate}
+            label={"Курс валюты закупки"}
+            value={new Intl.NumberFormat("ru-RU").format(
+              watch("parameters.purchaseCurrencyRate")
+            )}
+          />
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.bankCurrencySalesRatio || 0}
+            label={"Коэффициент продажи валюты, %"}
+            nameInput="bankCurrencySalesRatio"
+            setValue={setValue}
+          />
+
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.agentServices || 0}
+            label={"Услуги агента, руб"}
+            nameInput="agentServices"
+            setValue={setValue}
           />
           <FormattedInput
             isAgreed={isAgreed}
@@ -315,19 +203,22 @@ export const UsdToRub: React.FC<Props> = ({
             setValue={setValue}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.productionTime}
+
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.dutyPercent || 0}
+            label={"Пошлина, %"}
+            nameInput="dutyPercent"
+            setValue={setValue}
+          />
+          {errors.parameters && <span className="text-red">{"required"}</span>}
+
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.productionTime || 0}
             label={"Срок производсва, мес"}
-            type="number"
-            inputProps={{
-              min: 0,
-            }}
-            onChange={(event) => {
-              setValue("parameters.productionTime", +event.target.value);
-            }}
+            nameInput="productionTime"
+            setValue={setValue}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
 
@@ -369,26 +260,13 @@ export const UsdToRub: React.FC<Props> = ({
           <h2 className="font-bold">Продажа:</h2>
           <FormattedInput
             isAgreed={isAgreed}
-            defaultValue={order?.parameters?.salesWithVAT || 0}
-            nameInput="salesWithVAT"
-            label={"Продажа с НДС, РУБ"}
+            defaultValue={order?.parameters?.markup || 0}
+            label={"Наценка, %"}
+            nameInput="markup"
             setValue={setValue}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.dutyPercent}
-            label={"Пошлина, %"}
-            inputProps={{
-              min: 0,
-            }}
-            type="number"
-            onChange={(event) => {
-              setValue("parameters.dutyPercent", +event.target.value);
-            }}
-          />
+
           <TextField
             variant="outlined"
             required
@@ -402,39 +280,21 @@ export const UsdToRub: React.FC<Props> = ({
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <h2 className="py-2 font-bold">Условия оплаты:</h2>
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.prepaymentSale}
+
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.prepaymentSale || 0}
             label={"Предоплата, %"}
-            inputProps={{
-              min: 0,
-              max: 100,
-            }}
-            type="number"
-            onChange={(event) => {
-              setValue("parameters.prepaymentSale", +event.target.value);
-            }}
+            nameInput="prepaymentSale"
+            setValue={setValue}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.paymentBeforeShipmentSale}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.paymentBeforeShipmentSale || 0}
             label={"Перед отгрузкой, %"}
-            type="number"
-            inputProps={{
-              min: 0,
-              max: 100,
-            }}
-            onChange={(event) => {
-              setValue(
-                "parameters.paymentBeforeShipmentSale",
-                +event.target.value
-              );
-            }}
+            nameInput="paymentBeforeShipmentSale"
+            setValue={setValue}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
         </div>

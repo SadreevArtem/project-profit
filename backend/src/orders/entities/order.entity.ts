@@ -45,7 +45,7 @@ export class Order {
     type: 'enum',
     enum: TypeOrder,
     nullable: true,
-    default: TypeOrder.RUBTORUB, //по умолчанию черновик
+    default: TypeOrder.RUBTORUB, //по умолчанию
   })
   typeOrder: TypeOrder;
 
