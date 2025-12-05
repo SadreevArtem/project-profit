@@ -37,7 +37,7 @@ export enum OrderStatus {
 
 export enum TypeOrder {
   RUBTORUB = "RUBTORUB",
-  // USDTORUB = "USDTORUB",
+  USDTORUB = "USDTORUB",
 }
 
 export type Customer = {

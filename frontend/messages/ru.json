@@ -88,6 +88,7 @@
     "UNDER_APPROVAL": "На согласовании",
     "AGREED": "Согласовано",
     "REJECTED": "Отклонен",
+    "not_selected": "не выбрано",
     "type_order": "Тип заказа",
     "RUBTORUB": "В рублях",
     "USDTORUB": "В валюте",
