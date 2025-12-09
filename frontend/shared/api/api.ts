@@ -388,6 +388,35 @@ class API {
       throw error;
     }
   };
+  // запрос на выполнение расчета  в валюте
+  calculateOrderUSDRequest = async (input: Order, token: string) => {
+    if (!input.id) {
+      throw new Error("Order ID is required for calculate");
+    }
+
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/orders/calculate-usd/${input.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(input),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Update order request failed:", error);
+      throw error;
+    }
+  };
   //запрос на создание заказа
   createOrderRequest = async (input: Order, token: string) => {
     try {

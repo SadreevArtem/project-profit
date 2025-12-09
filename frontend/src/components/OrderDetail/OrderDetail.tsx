@@ -238,6 +238,8 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
           <UsdToRub
             isAgreed={isAgreed}
             watch={watch}
+            token={token}
+            getValues={getValues}
             errors={errors}
             setValue={setValue}
             order={order}

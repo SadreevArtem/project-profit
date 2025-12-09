@@ -65,7 +65,7 @@ export type Parameters = {
   deliveryTime: number;
   delivery: number;
   deliveryTimeLogistics: number;
-  deferralPaymentByCustomer: number;
+  deferralPaymentByCustomer: number; // Отсрочка оплаты заказчика
   operationalActivities: number;
   operationalActivitiesPercent: number;
   additionalExpenses: number;
@@ -104,6 +104,14 @@ export type Parameters = {
   totalPurchaseDDP: number;
   requiredFundsForCustoms: number;
   currency: string; //валюта закупки
+  deliveryToRF: number; //доставка до РФ
+  currencyDelivery: Currency;
+  deliveryTimeLogisticsToRF: number; // Срок доставки до РФ
+  transferFee: number; // Комиссия за перевод %
+  deliveryRF: number; // Доставка по РФ
+  deliveryTimeLogisticsRF: number; //срок доставки по РФ
+  daysForRegistration: number; // Дни на оформление
+  certification: number; // Сертификация
 };
 
 export type Order = {
