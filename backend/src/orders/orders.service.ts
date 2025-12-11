@@ -196,7 +196,7 @@ export class OrdersService {
     worksheet.getCell('H11').value = rates.CNY;
 
     worksheet.getCell('D6').value =
-      order.parameters.bankCurrencySalesRatio ?? ''; // Коэффициент продажи валюты
+      (order.parameters.bankCurrencySalesRatio ?? 0) / 100; // Коэффициент продажи валюты
     worksheet.getCell('D6').numFmt = '0%';
 
     worksheet.getCell('C9').value = order.parameters.productionTime ?? ''; // Срок производства
@@ -214,13 +214,13 @@ export class OrdersService {
       (order.parameters.paymentBeforeShipment ?? 0) / 100; // Перед отгрузкой
     worksheet.getCell('F10').numFmt = '0%'; // Формат процентов
 
-    worksheet.getCell('D14').value =
+    worksheet.getCell('D16').value =
       (order.parameters.prepaymentSale ?? 0) / 100; // Предоплата (продажа)
-    worksheet.getCell('D14').numFmt = '0%';
+    worksheet.getCell('D16').numFmt = '0%';
 
-    worksheet.getCell('F14').value =
+    worksheet.getCell('F16').value =
       (order.parameters.paymentBeforeShipmentSale ?? 0) / 100; // Перед отгрузкой (продажа)
-    worksheet.getCell('F14').numFmt = '0%';
+    worksheet.getCell('F16').numFmt = '0%';
 
     worksheet.getCell('E58').value = (order.parameters.markup ?? 0) / 100; // наценка
     worksheet.getCell('E58').numFmt = '0%';
