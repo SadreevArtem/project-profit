@@ -453,7 +453,7 @@ export const UsdToRub: React.FC<Props> = ({
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <FormattedInput
             isAgreed={isAgreed}
-            nameInput="otherUnplannedExpenses"
+            nameInput="additionalExpensesPercent"
             defaultValue={order?.parameters?.additionalExpensesPercent || 10}
             label={"***, %"}
             setValue={setValue}
