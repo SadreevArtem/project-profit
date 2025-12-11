@@ -276,16 +276,16 @@ export const UsdToRub: React.FC<Props> = ({
         </div>
         <div className="flex flex-col gap-8 px-2 w-[400px] bg-[#ffe3ed]">
           <h2 className="font-bold">Продажа:</h2>
-          <FormattedInput
+          {/* <FormattedInput
             isAgreed={isAgreed}
             defaultValue={order?.parameters?.markup || 0}
             label={"Наценка, %"}
             nameInput="markup"
             setValue={setValue}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
+          {errors.parameters && <span className="text-red">{"required"}</span>} */}
 
-          <TextField
+          {/* <TextField
             variant="outlined"
             required
             disabled={isAgreed}
@@ -296,7 +296,7 @@ export const UsdToRub: React.FC<Props> = ({
               setValue("parameters.deliveryTime", +event.target.value);
             }}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
+          {errors.parameters && <span className="text-red">{"required"}</span>} */}
           <h2 className="py-2 font-bold">Условия оплаты:</h2>
 
           <FormattedInput
@@ -442,23 +442,13 @@ export const UsdToRub: React.FC<Props> = ({
         </div>
         <div className="flex flex-col gap-8 w-[400px] bg-[#e9f5f7] mt-2 p-2">
           <h2 className="py-2 font-bold">Прочие расходы:</h2>
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.operationalActivitiesPercent}
+
+          <FormattedInput
+            isAgreed={isAgreed}
+            nameInput="operationalActivitiesPercent"
+            defaultValue={order?.parameters?.operationalActivitiesPercent || 0}
             label={"Операционная деятельность, %"}
-            type="number"
-            inputProps={{
-              min: 0,
-              max: 100,
-            }}
-            onChange={(event) => {
-              setValue(
-                "parameters.operationalActivitiesPercent",
-                +event.target.value
-              );
-            }}
+            setValue={setValue}
           />
           {errors.parameters && <span className="text-red">{"required"}</span>}
           <FormattedInput

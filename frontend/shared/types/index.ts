@@ -93,7 +93,7 @@ export type Parameters = {
   salesVat: number;
   salesWithoutVat: number;
   purchaseCurrencyRate: number;
-  bankCurrencySalesRatio: number;
+  bankCurrencySalesRatio: number; //Коэффициент продажи валюты
   agentServices: number; // услуги агента
   markup: number; // наценка
   currentCourseRate: number;

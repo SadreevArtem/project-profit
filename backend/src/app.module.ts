@@ -16,6 +16,7 @@ import { OrdersModule } from './orders/orders.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { UploadModule } from './upload/upload.module';
+import { CurrencyService } from './currency/currency.service';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { UploadModule } from './upload/upload.module';
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
     },
+    CurrencyService,
   ],
 })
 export class AppModule {}

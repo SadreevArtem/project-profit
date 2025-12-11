@@ -12,6 +12,7 @@ import * as path from 'path';
 import * as XLSX from 'xlsx';
 import * as XLSX_CALC from 'xlsx-calc';
 import { Workbook } from 'exceljs';
+import { CurrencyService } from 'src/currency/currency.service';
 // import { getNumericValue } from 'src/helpers/func';
 
 @Injectable()
@@ -21,6 +22,7 @@ export class OrdersService {
     private readonly orderRepository: Repository<Order>,
     private readonly usersService: UsersService,
     private readonly customersService: CustomersService,
+    private readonly currencyService: CurrencyService,
   ) {}
   findAll(): Promise<Order[]> {
     return this.orderRepository.find({
@@ -150,6 +152,153 @@ export class OrdersService {
     const companyProfitMinusTAX = getCellResultFunc('C44'); // Прибыль компании за вычетом налога на прибыль
     const projectProfitability = getCellResultFunc('C46'); // Рентабельность проекта
     const percentShareInProfit = getCellResultFunc('C48'); // % доли *** в прибыли
+
+    // const { ...rest } = updateOrderDto;
+    // Обновляем заказ, передавая только нужные поля из rest
+    return this.orderRepository.update(id, {
+      ...order,
+      parameters: {
+        ...(order.parameters || {}),
+        companyProfit,
+        companyProfitMinusVAT,
+        companyProfitMinusTAX,
+        projectProfitability: projectProfitability * 100,
+        percentShareInProfit: percentShareInProfit * 100,
+      },
+      filePath: `https://api.greenlinerussia.com.ru/uploads/${outputFileNameXLS}`,
+    });
+  }
+  async calculateUSD(id: number, updateOrderDto: UpdateOrderDto) {
+    const templatePath = path.join(__dirname, '../templates/template_usd.xlsx');
+    const outputDir = path.join(__dirname, '../../uploads');
+    const { ...order } = updateOrderDto;
+    const workbook = new Workbook();
+
+    // Получаем курсы валют ===
+    const rates = await this.currencyService.getRates();
+    // rates.USD, rates.EUR, rates.GBP, rates.CNY
+
+    // Загружаем шаблон
+    await workbook.xlsx.readFile(templatePath);
+
+    // Выбираем лист (например, первый)
+    const worksheet = workbook.getWorksheet(1);
+
+    // Заполняем данные в ячейки
+    worksheet.getCell('C6').value = order.parameters.currency ?? 0; // Валюта закупки
+    // Записываем курсы валют в файл Excel (если нужно) ===
+    worksheet.getCell('H8').value = rates.EUR;
+    worksheet.getCell('H9').value = rates.USD;
+    worksheet.getCell('H10').value = rates.GBP;
+    worksheet.getCell('H11').value = rates.CNY;
+
+    worksheet.getCell('D6').value =
+      order.parameters.bankCurrencySalesRatio ?? ''; // Коэффициент продажи валюты
+    worksheet.getCell('D6').numFmt = '0%';
+
+    worksheet.getCell('C9').value = order.parameters.productionTime ?? ''; // Срок производства
+
+    worksheet.getCell('J13').value = order.parameters.agentServices ?? 0; // услуги агента
+    worksheet.getCell('K2').value = order.parameters.purchase ?? 0; // Закупка
+
+    worksheet.getCell('R2').value = (order.parameters.dutyPercent ?? 0) / 100; // Пошлина
+    worksheet.getCell('R2').numFmt = '0%'; // Пошлина
+
+    worksheet.getCell('D10').value = (order.parameters.prepayment ?? 0) / 100; // Предоплата (в долях)
+    worksheet.getCell('D10').numFmt = '0%'; // Формат отображения процентов
+
+    worksheet.getCell('F10').value =
+      (order.parameters.paymentBeforeShipment ?? 0) / 100; // Перед отгрузкой
+    worksheet.getCell('F10').numFmt = '0%'; // Формат процентов
+
+    worksheet.getCell('D14').value =
+      (order.parameters.prepaymentSale ?? 0) / 100; // Предоплата (продажа)
+    worksheet.getCell('D14').numFmt = '0%';
+
+    worksheet.getCell('F14').value =
+      (order.parameters.paymentBeforeShipmentSale ?? 0) / 100; // Перед отгрузкой (продажа)
+    worksheet.getCell('F14').numFmt = '0%';
+
+    worksheet.getCell('E58').value = (order.parameters.markup ?? 0) / 100; // наценка
+    worksheet.getCell('E58').numFmt = '0%';
+
+    worksheet.getCell('D19').value = order.parameters.currencyDelivery ?? 0; //Валюта оплаты доставки
+
+    worksheet.getCell('C19').value = order.parameters.deliveryToRF ?? 0; // доставка до РФ
+
+    worksheet.getCell('C9').value =
+      order.parameters.deliveryTimeLogisticsToRF ?? ''; //  Срок доставки до РФ
+
+    worksheet.getCell('C21').value = (order.parameters.transferFee ?? 0) / 100; // Комиссия за перевод %
+    worksheet.getCell('C21').numFmt = '0%';
+
+    worksheet.getCell('C22').value = order.parameters.deliveryRF ?? 0; // Доставка по РФ
+
+    worksheet.getCell('C23').value =
+      order.parameters.deliveryTimeLogisticsRF ?? ''; // срок доставки по РФ
+
+    worksheet.getCell('C24').value =
+      order.parameters.deferralPaymentByCustomer ?? ''; // Отсрочка оплаты заказчика
+
+    worksheet.getCell('C27').value = order.parameters.daysForRegistration ?? 0; // Дни на оформление
+
+    worksheet.getCell('C30').value = order.parameters.certification ?? 0; // Сертификация
+
+    worksheet.getCell('C34').value = (order.parameters.costOfMoney ?? 0) / 100; // Инвестиции
+    worksheet.getCell('C34').numFmt = '0%';
+
+    worksheet.getCell('D49').value =
+      (order.parameters.operationalActivitiesPercent ?? 0) / 100; // ***
+    worksheet.getCell('D49').numFmt = '0%';
+
+    worksheet.getCell('D50').value =
+      (order.parameters.additionalExpensesPercent ?? 0) / 100; // ***
+    worksheet.getCell('D50').numFmt = '0%';
+
+    worksheet.getCell('C51').value =
+      order.parameters.otherUnplannedExpenses ?? 0; // Прочие незапланированные расходы
+
+    // Формируем имя нового файла
+    const outputFileNameXLS = `order_${id}.xlsx`;
+    const outputPath = path.join(outputDir, outputFileNameXLS);
+    // Сохраняем заполненный файл
+    await workbook.xlsx.writeFile(outputPath);
+
+    const buffer = await workbook.xlsx.writeBuffer(); // сохраняем в буфер, не в файл
+    const wb = XLSX.read(buffer, { type: 'buffer' });
+    XLSX_CALC(wb);
+
+    // // === Пересчитываем формулы через xlsx + xlsx-calc ===
+    // const wb = XLSX.readFile(outputPath);
+    // XLSX_CALC(wb); // выполняем пересчёт всех формул
+    // XLSX.writeFile(wb, outputPath); // сохраняем обратно
+
+    // // === Перечитываем файл (имитация открытия Excel) ===
+    // const reopened = new Workbook();
+    // await reopened.xlsx.readFile(outputPath);
+
+    // // Можно снова включить пересчёт для надёжности
+    // reopened.calcProperties.fullCalcOnLoad = true;
+
+    // // Выбираем лист (например, первый)
+    // const worksheetRead = reopened.getWorksheet(1);
+
+    // const getCellResultFunc = (cell) => {
+    //   return getNumericValue(cell, worksheetRead);
+    // };
+
+    // === 3. Считываем актуальные значения без изменения оригинального файла ===
+    const getCellResultFunc = (addr: string) => {
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const cell = sheet[addr];
+      return typeof cell?.v === 'number' ? cell.v : Number(cell?.v || 0);
+    };
+
+    const companyProfit = getCellResultFunc('C55'); // Прибыль компании
+    const companyProfitMinusVAT = getCellResultFunc('C56'); // Прибыль компании за вычетом НДС
+    const companyProfitMinusTAX = getCellResultFunc('C58'); // Прибыль компании за вычетом налога на прибыль
+    const projectProfitability = getCellResultFunc('C60'); // Рентабельность проекта
+    const percentShareInProfit = getCellResultFunc('C62'); // % доли *** в прибыли
 
     // const { ...rest } = updateOrderDto;
     // Обновляем заказ, передавая только нужные поля из rest

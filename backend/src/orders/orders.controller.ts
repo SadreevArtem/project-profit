@@ -59,4 +59,13 @@ export class OrdersController {
   ) {
     return this.ordersService.calculate(id, updateOrderDto);
   }
+  @UseGuards(JwtGuard)
+  @Patch('calculate-usd/:id')
+  @UseFilters(EntityNotFoundFilter)
+  async calculateUSD(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateOrderDto: UpdateOrderDto,
+  ) {
+    return this.ordersService.calculateUSD(id, updateOrderDto);
+  }
 }
