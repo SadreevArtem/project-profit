@@ -182,7 +182,10 @@ export class OrdersService {
     await workbook.xlsx.readFile(templatePath);
 
     // Выбираем лист (например, первый)
-    const worksheet = workbook.getWorksheet(1);
+    const worksheet = workbook.getWorksheet('sheet');
+    if (!worksheet) {
+      throw new Error('Worksheet not found in template_usd.xlsx');
+    }
 
     // Заполняем данные в ячейки
     worksheet.getCell('C6').value = order.parameters.currency ?? 0; // Валюта закупки
