@@ -188,7 +188,7 @@ export class OrdersService {
     }
 
     // Заполняем данные в ячейки
-    worksheet.getCell('C6').value = order.parameters.currency ?? 0; // Валюта закупки
+    worksheet.getCell('C6').value = order.parameters.currency || ''; // Валюта закупки
     // Записываем курсы валют в файл Excel (если нужно) ===
     worksheet.getCell('H8').value = rates.EUR;
     worksheet.getCell('H9').value = rates.USD;
@@ -225,11 +225,11 @@ export class OrdersService {
     worksheet.getCell('E58').value = (order.parameters.markup ?? 0) / 100; // наценка
     worksheet.getCell('E58').numFmt = '0%';
 
-    worksheet.getCell('D19').value = order.parameters.currencyDelivery ?? 0; //Валюта оплаты доставки
+    worksheet.getCell('D19').value = order.parameters.currencyDelivery || ''; //Валюта оплаты доставки
 
     worksheet.getCell('C19').value = order.parameters.deliveryToRF ?? 0; // доставка до РФ
 
-    worksheet.getCell('C9').value =
+    worksheet.getCell('C20').value =
       order.parameters.deliveryTimeLogisticsToRF ?? ''; //  Срок доставки до РФ
 
     worksheet.getCell('C21').value = (order.parameters.transferFee ?? 0) / 100; // Комиссия за перевод %
@@ -269,7 +269,15 @@ export class OrdersService {
 
     const buffer = await workbook.xlsx.writeBuffer(); // сохраняем в буфер, не в файл
     const wb = XLSX.read(buffer, { type: 'buffer' });
-    XLSX_CALC(wb);
+    try {
+      XLSX_CALC(wb);
+    } catch (error) {
+      console.error('Error calculating Excel formulas:', error);
+      console.error('Currency value:', order.parameters.currency);
+      throw new BadRequestException(
+        `Ошибка при расчете формул Excel: ${error.message}. Проверьте корректность данных, особенно валюту закупки.`,
+      );
+    }
 
     // // === Пересчитываем формулы через xlsx + xlsx-calc ===
     // const wb = XLSX.readFile(outputPath);
