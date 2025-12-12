@@ -230,7 +230,7 @@ export class OrdersService {
     worksheet.getCell('E58').value = (order.parameters.markup ?? 0) / 100; // наценка
     worksheet.getCell('E58').numFmt = '0%';
 
-    worksheet.getCell('D19').value = order.parameters.currencyDelivery || ''; //Валюта оплаты доставки
+    worksheet.getCell('D19').value = order.parameters.currencyDelivery || 'USD'; //Валюта оплаты доставки
 
     worksheet.getCell('C19').value = order.parameters.deliveryToRF ?? 0; // доставка до РФ
 
