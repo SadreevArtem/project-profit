@@ -52,7 +52,7 @@ export const UsdToRub: React.FC<Props> = ({
     CNY?: number;
   } | null>(null);
   const [cbrDate, setCbrDate] = useState<string | null>(null);
-
+  const [isRatesLoading, setIsRatesLoading] = useState(false);
   const [isRatesError, setIsRatesError] = useState(false);
   const [currency, setCurrency] = useState<string>(
     order?.parameters?.currency || Currency.USD
@@ -92,13 +92,20 @@ export const UsdToRub: React.FC<Props> = ({
     },
   });
 
-  useEffect(() => {
-    const controller = new AbortController();
+  const fetchCbrRates = (abortController?: AbortController) => {
+    const controller = abortController || new AbortController();
+    setIsRatesLoading(true);
+    setIsRatesError(false);
 
-    fetch("https://www.cbr-xml-daily.ru/daily_json.js", {
+    const url = `https://www.cbr-xml-daily.ru/daily_json.js`;
+
+    fetch(url, {
       signal: controller.signal,
     })
       .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
         setCbrDate(data?.Date || null);
         setCbrRates({
@@ -107,13 +114,26 @@ export const UsdToRub: React.FC<Props> = ({
           GBP: data?.Valute?.GBP?.Value,
           CNY: data?.Valute?.CNY?.Value,
         });
+        setIsRatesError(false);
       })
       .catch((error) => {
         if (error.name !== "AbortError") {
           setIsRatesError(true);
         }
+      })
+      .finally(() => {
+        setIsRatesLoading(false);
       });
 
+    return controller;
+  };
+
+  const handleRefreshRates = () => {
+    fetchCbrRates();
+  };
+
+  useEffect(() => {
+    const controller = fetchCbrRates();
     return () => controller.abort();
   }, []);
 
@@ -129,7 +149,18 @@ export const UsdToRub: React.FC<Props> = ({
   return (
     <>
       <div className="mb-6">
-        <h2 className="font-bold mb-2">Курс валют ЦБ РФ</h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="font-bold">Курс валют ЦБ РФ</h2>
+          <div className="flex items-center gap-2">
+            {isRatesLoading && <CircularProgress size={16} />}
+            <Button
+              title={isRatesLoading ? "Обновление..." : "Обновить"}
+              onButtonClick={handleRefreshRates}
+              disabled={isRatesLoading}
+              type="button"
+            />
+          </div>
+        </div>
         <div className="text-sm text-gray-600">
           {cbrDate
             ? `Обновлено: ${new Date(cbrDate).toLocaleDateString("ru-RU")}`
