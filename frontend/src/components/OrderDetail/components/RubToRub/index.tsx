@@ -1,5 +1,5 @@
 import {
-  FieldErrors,
+  Control,
   UseFormGetValues,
   UseFormSetValue,
   UseFormWatch,
@@ -9,7 +9,6 @@ import { CircularProgress, TextField } from "@mui/material";
 import { Order } from "../../../../../shared/types";
 import { useEffect } from "react";
 import { OPERATIONAL_ACTIVITIES } from "../../constants";
-// import clsx from "clsx";
 import { FormattedInput } from "@/components/FormattedInput";
 import { Button } from "@/components/Button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -20,9 +19,9 @@ import Image from "next/image";
 import clsx from "clsx";
 
 type Props = {
-  errors: FieldErrors<Inputs>;
   order: Order;
   token: string;
+  control: Control<Inputs>;
   getValues: UseFormGetValues<Inputs>;
   setValue: UseFormSetValue<Inputs>;
   watch: UseFormWatch<Inputs>;
@@ -31,10 +30,10 @@ type Props = {
 
 export const RubToRub: React.FC<Props> = ({
   isAgreed,
-  errors,
   order,
   getValues,
   token,
+  control,
   setValue,
   watch,
 }) => {
@@ -50,12 +49,11 @@ export const RubToRub: React.FC<Props> = ({
   const additionalExpensesPercent =
     watch("parameters.additionalExpensesPercent") || 0;
 
-  const keysToRemove = ["owner", "customer", "customerId", "ownerId"];
-  const currentValues = getValues();
+  const prepayment = watch("parameters.prepayment") || 0;
 
-  const filteredValues: Partial<Order> = Object.fromEntries(
-    Object.entries(currentValues).filter(([key]) => !keysToRemove.includes(key))
-  );
+  const prepaymentSale = watch("parameters.prepaymentSale") || 0;
+
+  const keysToRemove = ["owner", "customer", "customerId", "ownerId"];
 
   const calculateOrderFunc = (input: Order) =>
     api.calculateOrderRequest(input, token);
@@ -90,6 +88,14 @@ export const RubToRub: React.FC<Props> = ({
     setValue("parameters.deliveryTime", productionTime + deliveryTimeLogistics);
   }, [setValue, productionTime, deliveryTimeLogistics]);
 
+  useEffect(() => {
+    setValue("parameters.paymentBeforeShipment", 100 - prepayment);
+  }, [setValue, prepayment]);
+
+  useEffect(() => {
+    setValue("parameters.paymentBeforeShipmentSale", 100 - prepaymentSale);
+  }, [setValue, prepaymentSale]);
+
   //needs
   useEffect(() => {
     setValue(
@@ -113,58 +119,34 @@ export const RubToRub: React.FC<Props> = ({
             defaultValue={order?.parameters?.purchase || 0}
             label={"Закупка, руб"}
             nameInput="purchase"
-            setValue={setValue}
+            control={control}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.productionTime}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.productionTime || 0}
             label={"Срок производсва, мес"}
-            type="number"
-            inputProps={{
-              min: 0,
-            }}
-            onChange={(event) => {
-              setValue("parameters.productionTime", +event.target.value);
-            }}
+            nameInput="productionTime"
+            control={control}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
 
           <h2 className="py-2 font-bold">Условия оплаты:</h2>
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.prepayment}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.prepayment || 0}
             label={"Предоплата, %"}
-            type="number"
-            inputProps={{
-              min: 0,
-              max: 100,
-            }}
-            onChange={(event) => {
-              setValue("parameters.prepayment", +event.target.value);
-            }}
+            maxValue={100}
+            nameInput="prepayment"
+            control={control}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.paymentBeforeShipment}
+          <FormattedInput
+            isAgreed={isAgreed}
+            disabled
+            defaultValue={watch("parameters.paymentBeforeShipment") || 0}
             label={"Перед отгрузкой, %"}
-            type="number"
-            inputProps={{
-              min: 0,
-              max: 100,
-            }}
-            onChange={(event) => {
-              setValue("parameters.paymentBeforeShipment", +event.target.value);
-            }}
+            maxValue={100}
+            nameInput="paymentBeforeShipment"
+            control={control}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
         </div>
         <div className="flex flex-col gap-8 px-2 w-[400px] bg-[#ffe3ed]">
           <h2 className="font-bold">Продажа:</h2>
@@ -173,9 +155,8 @@ export const RubToRub: React.FC<Props> = ({
             defaultValue={order?.parameters?.salesWithVAT || 0}
             nameInput="salesWithVAT"
             label={"Продажа с НДС, РУБ"}
-            setValue={setValue}
+            control={control}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
@@ -185,43 +166,25 @@ export const RubToRub: React.FC<Props> = ({
             )}
             label={"Срок поставки, мес"}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
+
           <h2 className="py-2 font-bold">Условия оплаты:</h2>
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.prepaymentSale}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.prepaymentSale || 0}
             label={"Предоплата, %"}
-            inputProps={{
-              min: 0,
-              max: 100,
-            }}
-            type="number"
-            onChange={(event) => {
-              setValue("parameters.prepaymentSale", +event.target.value);
-            }}
+            maxValue={100}
+            nameInput="prepaymentSale"
+            control={control}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.paymentBeforeShipmentSale}
+          <FormattedInput
+            isAgreed={isAgreed}
+            disabled
+            defaultValue={watch("parameters.paymentBeforeShipmentSale") || 0}
             label={"Перед отгрузкой, %"}
-            type="number"
-            inputProps={{
-              min: 0,
-              max: 100,
-            }}
-            onChange={(event) => {
-              setValue(
-                "parameters.paymentBeforeShipmentSale",
-                +event.target.value
-              );
-            }}
+            maxValue={100}
+            nameInput="paymentBeforeShipmentSale"
+            control={control}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
         </div>
       </div>
       <div className="flex gap-8 mb-6">
@@ -232,43 +195,22 @@ export const RubToRub: React.FC<Props> = ({
             defaultValue={order?.parameters?.delivery || 0}
             label={"Доставка, РУБ"}
             nameInput="delivery"
-            setValue={setValue}
+            control={control}
           />
-
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.deliveryTimeLogistics}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.deliveryTimeLogistics || 0}
             label={"Срок поставки, мес"}
-            type="number"
-            inputProps={{
-              min: 0,
-            }}
-            onChange={(event) => {
-              setValue("parameters.deliveryTimeLogistics", +event.target.value);
-            }}
+            nameInput="deliveryTimeLogistics"
+            control={control}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.deferralPaymentByCustomer}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.deferralPaymentByCustomer || 0}
             label={"Отсрочка оплаты заказчика"}
-            type="number"
-            inputProps={{
-              min: 0,
-            }}
-            onChange={(event) => {
-              setValue(
-                "parameters.deferralPaymentByCustomer",
-                +event.target.value
-              );
-            }}
+            nameInput="deferralPaymentByCustomer"
+            control={control}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
         </div>
         <div className="flex flex-col gap-8 w-[400px] bg-[#e9f5f7] mt-2 p-2">
           <h2 className="py-2 font-bold">Прочие расходы:</h2>
@@ -281,24 +223,15 @@ export const RubToRub: React.FC<Props> = ({
               watch("parameters.operationalActivities")
             )}
           />
-          <TextField
-            variant="outlined"
-            required
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.additionalExpensesPercent}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.additionalExpensesPercent || 0}
             label={"Дополнительные расходы, %"}
-            inputProps={{
-              min: 0,
-              max: 100,
-            }}
-            type="number"
-            onChange={(event) => {
-              setValue(
-                "parameters.additionalExpensesPercent",
-                +event.target.value
-              );
-            }}
+            maxValue={100}
+            nameInput="additionalExpensesPercent"
+            control={control}
           />
+
           <TextField
             variant="outlined"
             disabled
@@ -308,16 +241,15 @@ export const RubToRub: React.FC<Props> = ({
               watch("parameters.additionalExpenses")
             )}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
+
           <FormattedInput
             isAgreed={isAgreed}
             defaultValue={order?.parameters?.otherUnplannedExpenses || 0}
             label={"Прочие незапланированные расходы"}
             nameInput="otherUnplannedExpenses"
-            setValue={setValue}
+            control={control}
           />
 
-          {errors.parameters && <span className="text-red">{"required"}</span>}
           <TextField
             variant="outlined"
             disabled
@@ -327,85 +259,20 @@ export const RubToRub: React.FC<Props> = ({
             )}
             label={"Итого прочие расходы"}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
         </div>
       </div>
       <div className="flex gap-8 mb-6">
         <div className="flex flex-col gap-8 w-[400px] bg-[#e9f5f7] mt-2 p-2">
           <h2 className="py-2 font-bold">Инвестиции:</h2>
-          <TextField
-            variant="outlined"
-            disabled={isAgreed}
-            defaultValue={order?.parameters?.costOfMoney}
+          <FormattedInput
+            isAgreed={isAgreed}
+            defaultValue={order?.parameters?.costOfMoney || 0}
             label={"Стоимость денег, %"}
-            type="number"
-            inputProps={{
-              min: 0,
-              max: 15,
-            }}
-            onChange={(event) => {
-              setValue("parameters.costOfMoney", +event.target.value);
-            }}
+            maxValue={15}
+            nameInput="costOfMoney"
+            control={control}
           />
         </div>
-
-        {/* <div className="flex flex-col gap-8 w-[400px] bg-[#f4faed] mt-2 p-2">
-          <h2 className="py-2 font-bold">Расчет прибыли проекта:</h2>
-          <TextField
-            variant="outlined"
-            disabled
-            defaultValue={order?.parameters?.companyProfit}
-            value={watch("parameters.companyProfit")}
-            label={"Прибыль компании, РУБ"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            disabled
-            defaultValue={order?.parameters?.companyProfitMinusVAT}
-            value={watch("parameters.companyProfitMinusVAT")}
-            label={"Прибыль компании за вычетом НДС, РУБ"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <TextField
-            variant="outlined"
-            disabled
-            defaultValue={order?.parameters?.companyProfitMinusTAX}
-            value={watch("parameters.companyProfitMinusTAX")}
-            label={"Прибыль компании за вычетом налога на прибыль, РУБ"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <h2 className="font-bold">Рентабельность проекта, %</h2>
-          <TextField
-            variant="outlined"
-            disabled
-            className={clsx({
-              "bg-rose-300": projectProfitability < 20,
-              "bg-green-500": projectProfitability > 20,
-            })}
-            defaultValue={order?.parameters?.projectProfitability}
-            value={watch("parameters.projectProfitability")}
-            // label={"Рентабельность проекта, %"}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-          <h2 className="font-bold">% доли *** в прибыли, %</h2>
-          <TextField
-            variant="outlined"
-            disabled
-            className={clsx({
-              "bg-rose-300": percentShareInProfit < 25,
-              "bg-green-500": percentShareInProfit > 25,
-            })}
-            defaultValue={order?.parameters?.percentShareInProfit}
-            value={watch("parameters.percentShareInProfit")}
-            type="number"
-          />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
-        </div> */}
       </div>
       <div className="flex gap-8 mb-6">
         {isPending ? (
@@ -414,11 +281,16 @@ export const RubToRub: React.FC<Props> = ({
           <Button
             disabled={true}
             title={"выполнить расчет"}
-            onButtonClick={() =>
-              calculateMutation({
-                ...(filteredValues as Order),
-              })
-            }
+            onButtonClick={() => {
+              const currentValues = getValues();
+              const filteredValues: Partial<Order> = Object.fromEntries(
+                Object.entries(currentValues).filter(
+                  ([key]) => !keysToRemove.includes(key)
+                )
+              );
+
+              calculateMutation(filteredValues as Order);
+            }}
             type="button"
           />
         )}
@@ -452,7 +324,7 @@ export const RubToRub: React.FC<Props> = ({
             )}
             label={"Прибыль компании, РУБ"}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
+
           <TextField
             variant="outlined"
             disabled
@@ -462,7 +334,7 @@ export const RubToRub: React.FC<Props> = ({
             )}
             label={"Прибыль компании за вычетом НДС, РУБ"}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
+
           <TextField
             variant="outlined"
             disabled
@@ -472,7 +344,7 @@ export const RubToRub: React.FC<Props> = ({
             )}
             label={"Прибыль компании за вычетом налога на прибыль, РУБ"}
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
+
           <h2 className="font-bold">Рентабельность проекта, %</h2>
           <TextField
             variant="outlined"
@@ -486,7 +358,7 @@ export const RubToRub: React.FC<Props> = ({
             // label={"Рентабельность проекта, %"}
             type="number"
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
+
           <h2 className="font-bold">% доли *** в прибыли, %</h2>
           <TextField
             variant="outlined"
@@ -499,7 +371,6 @@ export const RubToRub: React.FC<Props> = ({
             value={Math.round(order?.parameters?.percentShareInProfit)}
             type="number"
           />
-          {errors.parameters && <span className="text-red">{"required"}</span>}
         </div>
       )}
       {/* <TextField

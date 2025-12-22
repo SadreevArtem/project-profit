@@ -81,6 +81,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
     register,
     handleSubmit,
     setValue,
+    control,
     getValues,
     watch,
     formState: { errors },
@@ -228,7 +229,7 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
             watch={watch}
             token={token}
             getValues={getValues}
-            errors={errors}
+            control={control}
             setValue={setValue}
             order={order}
           />
@@ -240,8 +241,8 @@ export const OrderDetail: React.FC<Props> = ({ id }) => {
             watch={watch}
             token={token}
             getValues={getValues}
-            errors={errors}
             setValue={setValue}
+            control={control}
             order={order}
           />
         );
