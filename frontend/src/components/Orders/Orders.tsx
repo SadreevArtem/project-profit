@@ -13,12 +13,14 @@ import {
   TableRow,
 } from "@mui/material";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { Button } from "../Button";
 import { useTranslations } from "next-intl";
 import { formatDate } from "../../../shared/lib/formatDate";
 import clsx from "clsx";
 
 export const Orders = () => {
+  const router = useRouter();
   const token = useAuthStore((state) => state.token);
   const getOrders = () => api.getAllOrdersRequest(token);
   const { data: orders = [], isLoading } = useQuery<Order[]>({
@@ -52,17 +54,14 @@ export const Orders = () => {
               </TableHead>
               <TableBody>
                 {orders?.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow
+                    key={row.id}
+                    onClick={() => router.push(`/orders/${row.id}`)}
+                    className="cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
                     <TableCell>{row.id}</TableCell>
                     <TableCell>{row.customer?.name}</TableCell>
-                    <TableCell>
-                      <Link
-                        href={`/orders/${row.id}`}
-                        className="hover:text-primary"
-                      >
-                        {row.contractNumber}
-                      </Link>
-                    </TableCell>
+                    <TableCell>{row.contractNumber}</TableCell>
                     <TableCell
                       className={clsx({
                         "!bg-orange-500 !text-white":

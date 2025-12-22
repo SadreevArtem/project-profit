@@ -188,7 +188,7 @@ export class OrdersService {
     }
 
     // Заполняем данные в ячейки
-    worksheet.getCell('C6').value = order.parameters.currency || ''; // Валюта закупки
+    worksheet.getCell('C6').value = order.parameters.currency || 'USD'; // Валюта закупки
     // Записываем валюты и курсы валют в файл Excel для формул VLOOKUP/INDEX-MATCH ===
     // Валюта в колонке G, курс в колонке H
     worksheet.getCell('G8').value = 'EUR';
