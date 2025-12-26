@@ -24,6 +24,7 @@ import Image from "next/image";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { appToast } from "@/components/AppToast/components/lib/appToast";
 import { api } from "../../../../../shared/api/api";
+import { useCbrRates } from "@/hooks/useCbrRates";
 
 type Props = {
   order?: Order;
@@ -45,15 +46,7 @@ export const UsdToRub: React.FC<Props> = ({
   watch,
 }) => {
   const queryClient = useQueryClient();
-  const [cbrRates, setCbrRates] = useState<{
-    USD?: number;
-    EUR?: number;
-    GBP?: number;
-    CNY?: number;
-  } | null>(null);
-  const [cbrDate, setCbrDate] = useState<string | null>(null);
-  const [isRatesLoading, setIsRatesLoading] = useState(false);
-  const [isRatesError, setIsRatesError] = useState(false);
+
   const [currency, setCurrency] = useState<string>(
     order?.parameters?.currency || Currency.USD
   );
@@ -89,51 +82,15 @@ export const UsdToRub: React.FC<Props> = ({
       appToast.error("error");
     },
   });
+  const {
+    data: cbrData,
+    isLoading: isRatesLoading,
+    isError: isRatesError,
+    refetch: handleRefreshRates,
+  } = useCbrRates();
 
-  const fetchCbrRates = (abortController?: AbortController) => {
-    const controller = abortController || new AbortController();
-    setIsRatesLoading(true);
-    setIsRatesError(false);
-
-    const url = `https://www.cbr-xml-daily.ru/daily_json.js`;
-
-    fetch(url, {
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setCbrDate(data?.Date || null);
-        setCbrRates({
-          USD: data?.Valute?.USD?.Value,
-          EUR: data?.Valute?.EUR?.Value,
-          GBP: data?.Valute?.GBP?.Value,
-          CNY: data?.Valute?.CNY?.Value,
-        });
-        setIsRatesError(false);
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          setIsRatesError(true);
-        }
-      })
-      .finally(() => {
-        setIsRatesLoading(false);
-      });
-
-    return controller;
-  };
-
-  const handleRefreshRates = () => {
-    fetchCbrRates();
-  };
-
-  useEffect(() => {
-    const controller = fetchCbrRates();
-    return () => controller.abort();
-  }, []);
+  const cbrRates = cbrData?.rates || null;
+  const cbrDate = cbrData?.date || null;
 
   useEffect(() => {
     setValue("parameters.paymentBeforeShipment", 100 - prepayment);
@@ -161,7 +118,7 @@ export const UsdToRub: React.FC<Props> = ({
             {isRatesLoading && <CircularProgress size={16} />}
             <Button
               title={isRatesLoading ? "Обновление..." : "Обновить"}
-              onButtonClick={handleRefreshRates}
+              onButtonClick={() => handleRefreshRates()}
               disabled={isRatesLoading}
               type="button"
             />
@@ -215,7 +172,6 @@ export const UsdToRub: React.FC<Props> = ({
               labelId="demo-simple-select-label"
               id="demo-simple-select"
               value={currency}
-              defaultValue={order?.parameters?.currency}
               label={"Валюта закупки"}
               onChange={handleChangeCurrency}
             >
@@ -339,7 +295,6 @@ export const UsdToRub: React.FC<Props> = ({
               labelId="demo-simple-select-label"
               id="demo-simple-select"
               value={currencyDelivery}
-              defaultValue={order?.parameters?.currencyDelivery}
               label={"Валюта оплаты доставки"}
               onChange={handleChangeCurrencyDelivery}
             >
@@ -383,7 +338,7 @@ export const UsdToRub: React.FC<Props> = ({
           <FormattedInput
             isAgreed={isAgreed}
             defaultValue={order?.parameters?.deferralPaymentByCustomer || 0}
-            label={"Отсрочка оплаты заказчика"}
+            label={"Отсрочка оплаты заказчика, мес"}
             nameInput="deferralPaymentByCustomer"
             control={control}
           />
@@ -495,7 +450,6 @@ export const UsdToRub: React.FC<Props> = ({
           <TextField
             variant="outlined"
             disabled
-            defaultValue={order?.parameters?.companyProfit}
             value={new Intl.NumberFormat("ru-RU").format(
               order?.parameters?.companyProfit
             )}
@@ -505,7 +459,6 @@ export const UsdToRub: React.FC<Props> = ({
           <TextField
             variant="outlined"
             disabled
-            defaultValue={order?.parameters?.companyProfitMinusVAT}
             value={new Intl.NumberFormat("ru-RU").format(
               order?.parameters?.companyProfitMinusVAT
             )}
@@ -515,7 +468,6 @@ export const UsdToRub: React.FC<Props> = ({
           <TextField
             variant="outlined"
             disabled
-            defaultValue={order?.parameters?.companyProfitMinusTAX}
             value={new Intl.NumberFormat("ru-RU").format(
               order?.parameters?.companyProfitMinusTAX
             )}
@@ -530,7 +482,6 @@ export const UsdToRub: React.FC<Props> = ({
               "bg-rose-300": order?.parameters?.projectProfitability < 20,
               "bg-green-500": order?.parameters?.projectProfitability > 20,
             })}
-            defaultValue={order?.parameters?.projectProfitability}
             value={Math.round(order?.parameters?.projectProfitability)}
             // label={"Рентабельность проекта, %"}
             type="number"
@@ -544,7 +495,6 @@ export const UsdToRub: React.FC<Props> = ({
               "bg-rose-300": order?.parameters?.percentShareInProfit < 25,
               "bg-green-500": order?.parameters?.percentShareInProfit > 25,
             })}
-            defaultValue={order?.parameters?.percentShareInProfit}
             value={Math.round(order?.parameters?.percentShareInProfit)}
             type="number"
           />

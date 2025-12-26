@@ -318,7 +318,6 @@ export const RubToRub: React.FC<Props> = ({
           <TextField
             variant="outlined"
             disabled
-            defaultValue={order?.parameters?.companyProfit}
             value={new Intl.NumberFormat("ru-RU").format(
               order?.parameters?.companyProfit
             )}
@@ -328,7 +327,6 @@ export const RubToRub: React.FC<Props> = ({
           <TextField
             variant="outlined"
             disabled
-            defaultValue={order?.parameters?.companyProfitMinusVAT}
             value={new Intl.NumberFormat("ru-RU").format(
               order?.parameters?.companyProfitMinusVAT
             )}
@@ -338,7 +336,6 @@ export const RubToRub: React.FC<Props> = ({
           <TextField
             variant="outlined"
             disabled
-            defaultValue={order?.parameters?.companyProfitMinusTAX}
             value={new Intl.NumberFormat("ru-RU").format(
               order?.parameters?.companyProfitMinusTAX
             )}
@@ -353,7 +350,6 @@ export const RubToRub: React.FC<Props> = ({
               "bg-rose-300": order?.parameters?.projectProfitability < 20,
               "bg-green-500": order?.parameters?.projectProfitability > 20,
             })}
-            defaultValue={order?.parameters?.projectProfitability}
             value={Math.round(order?.parameters?.projectProfitability)}
             // label={"Рентабельность проекта, %"}
             type="number"
@@ -367,7 +363,6 @@ export const RubToRub: React.FC<Props> = ({
               "bg-rose-300": order?.parameters?.percentShareInProfit < 25,
               "bg-green-500": order?.parameters?.percentShareInProfit > 25,
             })}
-            defaultValue={order?.parameters?.percentShareInProfit}
             value={Math.round(order?.parameters?.percentShareInProfit)}
             type="number"
           />
